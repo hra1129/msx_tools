@@ -7,5 +7,6 @@ int main( int argc, char *argv[] ) {
 	printf( "ハローワールド" );
 	printf( "大中小時分秒" );
 	printf( "┴┬┼" );
+	printf( "ああああ" );
 	return 0;
 }
