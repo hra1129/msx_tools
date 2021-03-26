@@ -1,0 +1,711 @@
+Z80 Macro Assembler ZMA v1.0.15
+=====================================================
+Programmed by t.hara
+
+<< code >>
+[	INCLUDE ".//msxbios.asm"] begin
+[	INCLUDE ".//msxbios.asm"] end
+
+[	INCLUDE ".//msxdos1.asm"] begin
+[	INCLUDE ".//msxdos1.asm"] end
+
+[	ORG 0X100]
+	code address: 0x000100
+
+[ENTRY ::]
+	global label address: 0x000100
+
+[	LD SP , [ TPA_BOTTOM ]] Z80:22cyc, R800:8cyc
+000100: ed 7b 06 00
+
+[	LD DE , MSG_ENTRY] Z80:11cyc, R800:3cyc
+000104: 11 c7 01
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+000107: cd b4 01
+
+[	LD HL , 0X0081] Z80:11cyc, R800:3cyc
+00010a: 21 81 00
+
+[GET_PARAMETER :]
+	label address: 0x00010d
+
+[	LD A , [ HL ]] Z80:8cyc, R800:4cyc
+00010d: 7e
+
+[	INC HL] Z80:7cyc, R800:1cyc
+00010e: 23
+
+[	OR A , A] Z80:5cyc, R800:1cyc
+00010f: b7
+
+[	JP Z , USAGE] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000110: ca 29 01
+
+[	CP A , 48] Z80:8cyc, R800:2cyc
+000113: fe 30
+
+[	JP C , GET_PARAMETER] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000115: da 0d 01
+
+[	CP A , 51 + 1] Z80:8cyc, R800:2cyc
+000118: fe 34
+
+[	JP NC , GET_PARAMETER] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+00011a: d2 0d 01
+
+[	SUB A , 48] Z80:8cyc, R800:2cyc
+00011d: d6 30
+
+[	CALL MY_CHGCPU] Z80:18cyc, R800:5cyc
+00011f: cd 32 01
+
+[EXIT_PROGRAM ::]
+	global label address: 0x000122
+
+[	LD B , 0] Z80:8cyc, R800:2cyc
+000122: 06 00
+
+[	LD C , D1F_TERM0] Z80:8cyc, R800:2cyc
+000124: 0e 00
+
+[	JP BDOS] Z80:11cyc, R800:5cyc
+000126: c3 05 00
+
+[USAGE ::]
+	global label address: 0x000129
+
+[	LD DE , MSG_USAGE] Z80:11cyc, R800:3cyc
+000129: 11 ed 01
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+00012c: cd b4 01
+
+[	JP EXIT_PROGRAM] Z80:11cyc, R800:5cyc
+00012f: c3 22 01
+
+[MY_CHGCPU ::]
+	global label address: 0x000132
+
+[	LD [ TARGET_CPU ] , A] Z80:14cyc, R800:6cyc
+000132: 32 c2 01
+
+[	LD A , [ EXPTBL ]] Z80:14cyc, R800:6cyc
+000135: 3a c1 fc
+
+[	LD HL , 0X002D] Z80:11cyc, R800:3cyc
+000138: 21 2d 00
+
+[	CALL RDSLT] Z80:18cyc, R800:5cyc
+00013b: cd 0c 00
+
+[	LD [ VERSION_ID ] , A] Z80:14cyc, R800:6cyc
+00013e: 32 c3 01
+
+[	CP A , 3] Z80:8cyc, R800:2cyc
+000141: fe 03
+
+[	JP C , MY_CHGCPU_FOR_PANASONIC2PLUS] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000143: da 6f 01
+
+[	LD A , [ TARGET_CPU ]] Z80:14cyc, R800:6cyc
+000146: 3a c2 01
+
+[	CP A , 3] Z80:8cyc, R800:2cyc
+000149: fe 03
+
+[	JP NC , THIS_IS_NOT_PANASONIC2PLUS] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+00014b: d2 ab 01
+
+[	OR A , 0X80] Z80:8cyc, R800:2cyc
+00014e: f6 80
+
+[	LD IY , [ EXPTBL ]] Z80:22cyc, R800:8cyc
+000150: fd 2a c1 fc
+
+[	LD IX , CHGCPU] Z80:16cyc, R800:4cyc
+000154: dd 21 80 01
+
+[	CALL CALSLT] Z80:18cyc, R800:5cyc
+000158: cd 1c 00
+
+[	LD A , [ TARGET_CPU ]] Z80:14cyc, R800:6cyc
+00015b: 3a c2 01
+
+[	ADD A , A] Z80:5cyc, R800:1cyc
+00015e: 87
+
+[	LD L , A] Z80:5cyc, R800:2cyc
+00015f: 6f
+
+[	LD H , 0] Z80:8cyc, R800:2cyc
+000160: 26 00
+
+[	LD DE , MSG_CHANGED_TABLE] Z80:11cyc, R800:3cyc
+000162: 11 fc 02
+
+[	ADD HL , DE] Z80:12cyc, R800:1cyc
+000165: 19
+
+[	LD E , [ HL ]] Z80:8cyc, R800:4cyc
+000166: 5e
+
+[	INC HL] Z80:7cyc, R800:1cyc
+000167: 23
+
+[	LD D , [ HL ]] Z80:8cyc, R800:4cyc
+000168: 56
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+000169: cd b4 01
+
+[	JP EXIT_PROGRAM] Z80:11cyc, R800:5cyc
+00016c: c3 22 01
+
+[MY_CHGCPU_FOR_PANASONIC2PLUS ::]
+	global label address: 0x00016f
+
+[	LD A , 8] Z80:8cyc, R800:2cyc
+00016f: 3e 08
+
+[	OUT [ 0X40 ] , A] Z80:12cyc, R800:10 or 9cyc
+000171: d3 40
+
+[	IN A , [ 0X40 ]] Z80:12cyc, R800:10 or 9cyc
+000173: db 40
+
+[	CP A , ~ 8] Z80:8cyc, R800:2cyc
+000175: fe f7
+
+[	JP NZ , THIS_IS_NOT_TURBO_R] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000177: c2 a2 01
+
+[	LD A , [ TARGET_CPU ]] Z80:14cyc, R800:6cyc
+00017a: 3a c2 01
+
+[	OR A , A] Z80:5cyc, R800:1cyc
+00017d: b7
+
+[	JP Z , CHANGE_Z80_MODE_FOR_PANA2PLUS] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+00017e: ca 89 01
+
+[	CP A , 3] Z80:8cyc, R800:2cyc
+000181: fe 03
+
+[	JP Z , CHANGE_Z80_5MHZ_MODE_FOR_PANA2PLUS] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000183: ca 96 01
+
+[	JP THIS_IS_NOT_TURBO_R] Z80:11cyc, R800:5cyc
+000186: c3 a2 01
+
+[CHANGE_Z80_MODE_FOR_PANA2PLUS ::]
+	global label address: 0x000189
+
+[	LD A , 1] Z80:8cyc, R800:2cyc
+000189: 3e 01
+
+[	OUT [ 0X41 ] , A] Z80:12cyc, R800:10 or 9cyc
+00018b: d3 41
+
+[	LD DE , MSG_Z80] Z80:11cyc, R800:3cyc
+00018d: 11 04 03
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+000190: cd b4 01
+
+[	JP EXIT_PROGRAM] Z80:11cyc, R800:5cyc
+000193: c3 22 01
+
+[CHANGE_Z80_5MHZ_MODE_FOR_PANA2PLUS ::]
+	global label address: 0x000196
+
+[	XOR A , A] Z80:5cyc, R800:1cyc
+000196: af
+
+[	OUT [ 0X41 ] , A] Z80:12cyc, R800:10 or 9cyc
+000197: d3 41
+
+[	LD DE , MSG_Z80_5MHZ] Z80:11cyc, R800:3cyc
+000199: 11 5d 03
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+00019c: cd b4 01
+
+[	JP EXIT_PROGRAM] Z80:11cyc, R800:5cyc
+00019f: c3 22 01
+
+[THIS_IS_NOT_TURBO_R ::]
+	global label address: 0x0001a2
+
+[	LD DE , MSG_THIS_IS_NOT_TURBO_R] Z80:11cyc, R800:3cyc
+0001a2: 11 c5 02
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+0001a5: cd b4 01
+
+[	JP EXIT_PROGRAM] Z80:11cyc, R800:5cyc
+0001a8: c3 22 01
+
+[THIS_IS_NOT_PANASONIC2PLUS ::]
+	global label address: 0x0001ab
+
+[	LD DE , MSG_THIS_IS_NOT_PANASONIC2PLUS] Z80:11cyc, R800:3cyc
+0001ab: 11 de 02
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+0001ae: cd b4 01
+
+[	JP EXIT_PROGRAM] Z80:11cyc, R800:5cyc
+0001b1: c3 22 01
+
+[	INCLUDE ".//stdio.asm"] begin
+[	SCOPE PUTS]
+	Scope path: PUTS:
+
+[PUTS ::]
+	global label address: 0x0001b4
+
+[	LD A , [ DE ]] Z80:8cyc, R800:4cyc
+0001b4: 1a
+
+[	INC DE] Z80:7cyc, R800:1cyc
+0001b5: 13
+
+[	OR A , A] Z80:5cyc, R800:1cyc
+0001b6: b7
+
+[	RET Z] Z80:12cyc(branch), 6cyc(through), R800:5cyc(branch), 1cyc(through)
+0001b7: c8
+
+[	PUSH DE] Z80:12cyc, R800:6cyc
+0001b8: d5
+
+[	LD C , D1F_DIRIO] Z80:8cyc, R800:2cyc
+0001b9: 0e 06
+
+[	LD E , A] Z80:5cyc, R800:2cyc
+0001bb: 5f
+
+[	CALL BDOS] Z80:18cyc, R800:5cyc
+0001bc: cd 05 00
+
+[	POP DE] Z80:11cyc, R800:5cyc
+0001bf: d1
+
+[	JR PUTS] Z80:13cyc, R800:3cyc
+0001c0: 18 f2
+
+[	ENDSCOPE]
+	Scope path: 
+
+[	INCLUDE ".//stdio.asm"] end
+
+[TARGET_CPU ::]
+	global label address: 0x0001c2
+
+[	DB 0]
+0001c2: 00
+
+[VERSION_ID ::]
+	global label address: 0x0001c3
+
+[	DB 0]
+0001c3: 00
+
+[MSG_CRLF ::]
+	global label address: 0x0001c4
+
+[	DB 0X0D , 0X0A , 0]
+0001c4: 0d 0a 00
+
+[MSG_ENTRY ::]
+	global label address: 0x0001c7
+
+[	DS "CHGCPU v1.0 Programmed by HRA! 2021\r\n"]
+0001c7: 43 48 47 43 50 55 20 76
+0001cf: 31 2e 30 20 50 72 6f 67
+0001d7: 72 61 6d 6d 65 64 20 62
+0001df: 79 20 48 52 41 21 20 32
+0001e7: 30 32 31 0d 0a
+
+[	DB 0]
+0001ec: 00
+
+[MSG_USAGE ::]
+	global label address: 0x0001ed
+
+[	DS "Usage:\r\n"]
+0001ed: 55 73 61 67 65 3a 0d 0a
+
+[	DS "  >CHGCPU <parameter>\r\n"]
+0001f5: 20 20 3e 43 48 47 43 50
+0001fd: 55 20 3c 70 61 72 61 6d
+000205: 65 74 65 72 3e 0d 0a
+
+[	DS "\r\n"]
+00020c: 0d 0a
+
+[	DS "  <parameter>\r\n"]
+00020e: 20 20 3c 70 61 72 61 6d
+000216: 65 74 65 72 3e 0d 0a
+
+[	DS "    0 ... Z80 3.579545MHz mode\r\n"]
+00021d: 20 20 20 20 30 20 2e 2e
+000225: 2e 20 5a 38 30 20 33 2e
+00022d: 35 37 39 35 34 35 4d 48
+000235: 7a 20 6d 6f 64 65 0d 0a
+
+[	DS "    1 ... R800 ROM mode (turboR Only)\r\n"]
+00023d: 20 20 20 20 31 20 2e 2e
+000245: 2e 20 52 38 30 30 20 52
+00024d: 4f 4d 20 6d 6f 64 65 20
+000255: 28 74 75 72 62 6f 52 20
+00025d: 4f 6e 6c 79 29 0d 0a
+
+[	DS "    2 ... R800 DRAM mode (turboR Only)\r\n"]
+000264: 20 20 20 20 32 20 2e 2e
+00026c: 2e 20 52 38 30 30 20 44
+000274: 52 41 4d 20 6d 6f 64 65
+00027c: 20 28 74 75 72 62 6f 52
+000284: 20 4f 6e 6c 79 29 0d 0a
+
+[	DS "    3 ... Z80 5.3693175MHz mode (Panasonic MSX2+ Only)\r\n"]
+00028c: 20 20 20 20 33 20 2e 2e
+000294: 2e 20 5a 38 30 20 35 2e
+00029c: 33 36 39 33 31 37 35 4d
+0002a4: 48 7a 20 6d 6f 64 65 20
+0002ac: 28 50 61 6e 61 73 6f 6e
+0002b4: 69 63 20 4d 53 58 32 2b
+0002bc: 20 4f 6e 6c 79 29 0d 0a
+
+[	DB 0]
+0002c4: 00
+
+[MSG_THIS_IS_NOT_TURBO_R ::]
+	global label address: 0x0002c5
+
+[	DS "This is not MSXturboR.\r\n"]
+0002c5: 54 68 69 73 20 69 73 20
+0002cd: 6e 6f 74 20 4d 53 58 74
+0002d5: 75 72 62 6f 52 2e 0d 0a
+
+[	DB 0]
+0002dd: 00
+
+[MSG_THIS_IS_NOT_PANASONIC2PLUS ::]
+	global label address: 0x0002de
+
+[	DS "This is not FS-A1FX/WX/WSX.\r\n"]
+0002de: 54 68 69 73 20 69 73 20
+0002e6: 6e 6f 74 20 46 53 2d 41
+0002ee: 31 46 58 2f 57 58 2f 57
+0002f6: 53 58 2e 0d 0a
+
+[	DB 0]
+0002fb: 00
+
+[MSG_CHANGED_TABLE ::]
+	global label address: 0x0002fc
+
+[	DW MSG_Z80 , MSG_R800_ROM , MSG_R800_DRAM , MSG_Z80_5MHZ]
+0002fc: 04 03 26 03 41 03 5d 03
+
+[MSG_Z80 ::]
+	global label address: 0x000304
+
+[	DS "Changed to Z80 3.579545MHz mode\r\n"]
+000304: 43 68 61 6e 67 65 64 20
+00030c: 74 6f 20 5a 38 30 20 33
+000314: 2e 35 37 39 35 34 35 4d
+00031c: 48 7a 20 6d 6f 64 65 0d
+000324: 0a
+
+[	DB 0]
+000325: 00
+
+[MSG_R800_ROM ::]
+	global label address: 0x000326
+
+[	DS "Changed to R800 ROM mode\r\n"]
+000326: 43 68 61 6e 67 65 64 20
+00032e: 74 6f 20 52 38 30 30 20
+000336: 52 4f 4d 20 6d 6f 64 65
+00033e: 0d 0a
+
+[	DB 0]
+000340: 00
+
+[MSG_R800_DRAM ::]
+	global label address: 0x000341
+
+[	DS "Changed to R800 DRAM mode\r\n"]
+000341: 43 68 61 6e 67 65 64 20
+000349: 74 6f 20 52 38 30 30 20
+000351: 44 52 41 4d 20 6d 6f 64
+000359: 65 0d 0a
+
+[	DB 0]
+00035c: 00
+
+[MSG_Z80_5MHZ ::]
+	global label address: 0x00035d
+
+[	DS "Changed to 5.3693175MHz mode\r\n"]
+00035d: 43 68 61 6e 67 65 64 20
+000365: 74 6f 20 35 2e 33 36 39
+00036d: 33 31 37 35 4d 48 7a 20
+000375: 6d 6f 64 65 0d 0a
+
+[	DB 0]
+00037b: 00
+
+<< label >>
+BDOS 5 ( 0x5 )
+BEEP 192 ( 0xc0 )
+BIGFIL 363 ( 0x16b )
+BOTTOM 64584 ( 0xfc48 )
+BREAKV 62245 ( 0xf325 )
+BREAKX 183 ( 0xb7 )
+CALATR 135 ( 0x87 )
+CALBAS 345 ( 0x159 )
+CALLF 48 ( 0x30 )
+CALPAT 132 ( 0x84 )
+CALSLT 28 ( 0x1c )
+CHANGE_Z80_5MHZ_MODE_FOR_PANA2PLUS 406 ( 0x196 )
+CHANGE_Z80_MODE_FOR_PANA2PLUS 393 ( 0x189 )
+CHGCAP 306 ( 0x132 )
+CHGCLR 98 ( 0x62 )
+CHGCPU 384 ( 0x180 )
+CHGET 159 ( 0x9f )
+CHGMOD 95 ( 0x5f )
+CHGSND 309 ( 0x135 )
+CHKRAM 0 ( 0x0 )
+CHPUT 162 ( 0xa2 )
+CHRGTR 16 ( 0x10 )
+CHSNS 156 ( 0x9c )
+CLIKSW 62427 ( 0xf3db )
+CLPRIM 62348 ( 0xf38c )
+CLRSPR 105 ( 0x69 )
+CLS 195 ( 0xc3 )
+CNSDFG 62430 ( 0xf3de )
+CNVCHR 171 ( 0xab )
+CSRX 62429 ( 0xf3dd )
+CSRY 62428 ( 0xf3dc )
+D1E_EOF 199 ( 0xc7 )
+D1F_ALLOC 27 ( 0x1b )
+D1F_AUXIN 3 ( 0x3 )
+D1F_AUXOUT 4 ( 0x4 )
+D1F_BUFIN 10 ( 0xa )
+D1F_CONIN 1 ( 0x1 )
+D1F_CONOUT 2 ( 0x2 )
+D1F_CONST 11 ( 0xb )
+D1F_CPMVER 12 ( 0xc )
+D1F_CURDRV 25 ( 0x19 )
+D1F_DIRIN 7 ( 0x7 )
+D1F_DIRIO 6 ( 0x6 )
+D1F_DPARM 49 ( 0x31 )
+D1F_DSKRST 13 ( 0xd )
+D1F_FCLOSE 16 ( 0x10 )
+D1F_FDEL 19 ( 0x13 )
+D1F_FMAKE 22 ( 0x16 )
+D1F_FOPEN 15 ( 0xf )
+D1F_FREN 23 ( 0x17 )
+D1F_FSIZE 35 ( 0x23 )
+D1F_GDATE 42 ( 0x2a )
+D1F_GTIME 44 ( 0x2c )
+D1F_INNOE 8 ( 0x8 )
+D1F_LOGIN 24 ( 0x18 )
+D1F_LSTOUT 5 ( 0x5 )
+D1F_RDABS 47 ( 0x2f )
+D1F_RDBLK 39 ( 0x27 )
+D1F_RDRND 33 ( 0x21 )
+D1F_RDSEQ 20 ( 0x14 )
+D1F_SDATE 43 ( 0x2b )
+D1F_SELDSK 14 ( 0xe )
+D1F_SETDTA 26 ( 0x1a )
+D1F_SETRND 36 ( 0x24 )
+D1F_SFIRST 17 ( 0x11 )
+D1F_SNEXT 18 ( 0x12 )
+D1F_STIME 45 ( 0x2d )
+D1F_STROUT 9 ( 0x9 )
+D1F_TERM0 0 ( 0x0 )
+D1F_VERIFY 46 ( 0x2e )
+D1F_WRABS 48 ( 0x30 )
+D1F_WRBLK 38 ( 0x26 )
+D1F_WRRND 34 ( 0x22 )
+D1F_WRSEQ 21 ( 0x15 )
+D1F_WRZER 40 ( 0x28 )
+DCOMPR 32 ( 0x20 )
+DEVICE 64921 ( 0xfd99 )
+DISKVE 62243 ( 0xf323 )
+DISSCR 65 ( 0x41 )
+DMA 128 ( 0x80 )
+DSPFNK 207 ( 0xcf )
+ENASCR 68 ( 0x44 )
+ENASLT 36 ( 0x24 )
+ENTRY 256 ( 0x100 )
+EOL 360 ( 0x168 )
+ERAFNK 204 ( 0xcc )
+EXBRSA 64248 ( 0xfaf8 )
+EXIT_PROGRAM 290 ( 0x122 )
+EXPTBL 64705 ( 0xfcc1 )
+EXTBIO 65482 ( 0xffca )
+EXTROM 351 ( 0x15f )
+FILVRM 86 ( 0x56 )
+FNKSB 201 ( 0xc9 )
+FNKSTR 63615 ( 0xf87f )
+GETCPU 387 ( 0x183 )
+GETYPR 40 ( 0x28 )
+GET_PARAMETER 269 ( 0x10d )
+GICINI 144 ( 0x90 )
+GRPPRT 141 ( 0x8d )
+GSPSIZ 138 ( 0x8a )
+GTPAD 219 ( 0xdb )
+GTPDL 222 ( 0xde )
+GTSTCK 213 ( 0xd5 )
+GTTRIG 216 ( 0xd8 )
+HIMEM 64586 ( 0xfc4a )
+HOKVLD 64288 ( 0xfb20 )
+H_PROMPT 62031 ( 0xf24f )
+H_TIMI 64927 ( 0xfd9f )
+INIFNK 62 ( 0x3e )
+INIGRP 114 ( 0x72 )
+INIMLT 117 ( 0x75 )
+INIT32 111 ( 0x6f )
+INITIO 59 ( 0x3b )
+INITXT 108 ( 0x6c )
+INLIN 177 ( 0xb1 )
+ISFLIO 330 ( 0x14a )
+KEYBUF 64496 ( 0xfbf0 )
+KEYINT 56 ( 0x38 )
+KILBUF 342 ( 0x156 )
+LDIRMV 89 ( 0x59 )
+LDIRVM 92 ( 0x5c )
+LINWRK 64536 ( 0xfc18 )
+LPTOUT 165 ( 0xa5 )
+LPTSTT 168 ( 0xa8 )
+MASTERS 62280 ( 0xf348 )
+MSG_CHANGED_TABLE 764 ( 0x2fc )
+MSG_CRLF 452 ( 0x1c4 )
+MSG_ENTRY 455 ( 0x1c7 )
+MSG_R800_DRAM 833 ( 0x341 )
+MSG_R800_ROM 806 ( 0x326 )
+MSG_THIS_IS_NOT_PANASONIC2PLUS 734 ( 0x2de )
+MSG_THIS_IS_NOT_TURBO_R 709 ( 0x2c5 )
+MSG_USAGE 493 ( 0x1ed )
+MSG_Z80 772 ( 0x304 )
+MSG_Z80_5MHZ 861 ( 0x35d )
+MY_CHGCPU 306 ( 0x132 )
+MY_CHGCPU_FOR_PANASONIC2PLUS 367 ( 0x16f )
+NEWKEY 64485 ( 0xfbe5 )
+NMI 102 ( 0x66 )
+NRDVRM 372 ( 0x174 )
+NSETRD 366 ( 0x16e )
+NSTWRT 369 ( 0x171 )
+NWRVRM 375 ( 0x177 )
+OLDKEY 64474 ( 0xfbda )
+OLDSCR 64688 ( 0xfcb0 )
+OUTDLP 333 ( 0x14d )
+OUTDO 24 ( 0x18 )
+PATWRK 64576 ( 0xfc40 )
+PCMPLY 390 ( 0x186 )
+PCMREC 393 ( 0x189 )
+PINLIN 174 ( 0xae )
+POSIT 198 ( 0xc6 )
+PROCNM 64905 ( 0xfd89 )
+PUTS 436 ( 0x1b4 )
+QINLIN 180 ( 0xb4 )
+RAMAD0 62273 ( 0xf341 )
+RAMAD1 62274 ( 0xf342 )
+RAMAD2 62275 ( 0xf343 )
+RAMAD3 62276 ( 0xf344 )
+RDPRIM 62336 ( 0xf380 )
+RDPSG 150 ( 0x96 )
+RDRES 378 ( 0x17a )
+RDSLT 12 ( 0xc )
+RDVDP 318 ( 0x13e )
+RDVRM 74 ( 0x4a )
+RG0SAV 62431 ( 0xf3df )
+RG1SAV 62432 ( 0xf3e0 )
+RG2SAV 62433 ( 0xf3e1 )
+RG3SAV 62434 ( 0xf3e2 )
+RG4SAV 62435 ( 0xf3e3 )
+RG5SAV 62436 ( 0xf3e4 )
+RG6SAV 62437 ( 0xf3e5 )
+RG7SAV 62438 ( 0xf3e6 )
+RG8SAV 65511 ( 0xffe7 )
+RG9SAV 65512 ( 0xffe8 )
+RSLREG 312 ( 0x138 )
+SCRMOD 64687 ( 0xfcaf )
+SETGRP 126 ( 0x7e )
+SETMLT 129 ( 0x81 )
+SETRD 80 ( 0x50 )
+SETT32 123 ( 0x7b )
+SETTXT 120 ( 0x78 )
+SETWRT 83 ( 0x53 )
+SLTATR 64713 ( 0xfcc9 )
+SLTTBL 64709 ( 0xfcc5 )
+SLTWRK 64777 ( 0xfd09 )
+SNSMAT 321 ( 0x141 )
+STATFL 62439 ( 0xf3e7 )
+STMOTR 243 ( 0xf3 )
+STRTMS 153 ( 0x99 )
+SUBROM 348 ( 0x15c )
+SUB_BEEP 381 ( 0x17d )
+SUB_CALATR 253 ( 0xfd )
+SUB_CALPAT 249 ( 0xf9 )
+SUB_CHGCLR 273 ( 0x111 )
+SUB_CHGMDP 437 ( 0x1b5 )
+SUB_CHGMOD 209 ( 0xd1 )
+SUB_CLRSPR 245 ( 0xf5 )
+SUB_CLSSUB 277 ( 0x115 )
+SUB_DSPFNK 285 ( 0x11d )
+SUB_GETPAT 261 ( 0x105 )
+SUB_GETPLT 329 ( 0x149 )
+SUB_GSPSIZ 257 ( 0x101 )
+SUB_GTPPRT 137 ( 0x89 )
+SUB_INIGRP 221 ( 0xdd )
+SUB_INIMLT 225 ( 0xe1 )
+SUB_INIPLT 321 ( 0x141 )
+SUB_INIT32 217 ( 0xd9 )
+SUB_INITXT 213 ( 0xd5 )
+SUB_KNJPRT 445 ( 0x1bd )
+SUB_NEWPAD 429 ( 0x1ad )
+SUB_NVBXFL 205 ( 0xcd )
+SUB_NVBXLN 201 ( 0xc9 )
+SUB_PROMPT 385 ( 0x181 )
+SUB_RDVRM 269 ( 0x10d )
+SUB_REDCLK 501 ( 0x1f5 )
+SUB_RSTPLT 325 ( 0x145 )
+SUB_SETGRP 237 ( 0xed )
+SUB_SETMLT 241 ( 0xf1 )
+SUB_SETPAG 317 ( 0x13d )
+SUB_SETPLT 333 ( 0x14d )
+SUB_SETT32 233 ( 0xe9 )
+SUB_SETTXT 229 ( 0xe5 )
+SUB_VDPSTA 305 ( 0x131 )
+SUB_WRTCLK 505 ( 0x1f9 )
+SUB_WRTVDP 301 ( 0x12d )
+SUB_WRTVRM 265 ( 0x109 )
+SYNCHR 8 ( 0x8 )
+TAPIN 228 ( 0xe4 )
+TAPIOF 231 ( 0xe7 )
+TAPION 225 ( 0xe1 )
+TAPOOF 240 ( 0xf0 )
+TAPOON 234 ( 0xea )
+TAPOUT 237 ( 0xed )
+TARGET_CPU 450 ( 0x1c2 )
+THIS_IS_NOT_PANASONIC2PLUS 427 ( 0x1ab )
+THIS_IS_NOT_TURBO_R 418 ( 0x1a2 )
+TOTEXT 210 ( 0xd2 )
+TPA_BOTTOM 6 ( 0x6 )
+TRPTBL 64588 ( 0xfc4c )
+USAGE 297 ( 0x129 )
+VERSION_ID 451 ( 0x1c3 )
+WRPRIM 62341 ( 0xf385 )
+WRRES 381 ( 0x17d )
+WRSLT 20 ( 0x14 )
+WRTPSG 147 ( 0x93 )
+WRTVDP 71 ( 0x47 )
+WRTVRM 77 ( 0x4d )
+WSLREG 315 ( 0x13b )

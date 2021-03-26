@@ -1,0 +1,2 @@
+zma CHGCPU.ASM CHGCPU.COM
+pause
