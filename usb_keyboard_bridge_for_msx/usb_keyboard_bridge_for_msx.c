@@ -402,7 +402,7 @@ static void initialization( void ) {
 
 // --------------------------------------------------------------------
 void response_core( void ) {
-	uint8_t matrix;
+	uint32_t matrix;
 	int y;
 	static const uint32_t x_mask = 0x0FF << MSX_KEYMATRIX_RESULT_PIN;
 	#if DEBUG_UART_ON
