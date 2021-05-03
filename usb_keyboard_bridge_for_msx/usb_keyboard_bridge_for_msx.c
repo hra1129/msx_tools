@@ -360,8 +360,6 @@ static uint8_t msx_key_matrix[16] = {
 
 // --------------------------------------------------------------------
 static void initialization( void ) {
-	uint8_t i;
-
 	board_init();
 
 	uart_init(UART_ID, BAUD_RATE);
@@ -371,19 +369,6 @@ static void initialization( void ) {
 	uart_set_format(UART_ID, 8, 2, UART_PARITY_NONE);
 
 	tusb_init();
-
-	//	GPIO‚ÌM†‚ÌŒü‚«‚ğİ’è
-	for( i = 0; i < 12; i++ ) {		// Y0-Y11, 12bits
-		gpio_set_dir( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
-		#if MSX_KEYMATRIX_ROW_PULL_UP == 1
-			gpio_pull_up( MSX_KEYMATRIX_ROW_PIN + i );
-		#elif MSX_KEYMATRIX_ROW_PULL_UP == 2
-			gpio_pull_down( MSX_KEYMATRIX_ROW_PIN + i );
-		#endif
-	}
-	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
-		gpio_set_dir( MSX_KEYMATRIX_RESULT_PIN + i, GPIO_OUT );
-	}
 }
 
 // --------------------------------------------------------------------
@@ -402,6 +387,7 @@ static void initialization( void ) {
 
 // --------------------------------------------------------------------
 void response_core( void ) {
+	uint8_t i;
 	uint32_t matrix;
 	int y;
 	static const uint32_t x_mask = 0x0FF << MSX_KEYMATRIX_RESULT_PIN;
@@ -409,6 +395,21 @@ void response_core( void ) {
 		int i, j;
 		char s_buffer[32];
 	#endif
+
+	//	GPIO‚ÌM†‚ÌŒü‚«‚ğİ’è
+	for( i = 0; i < 12; i++ ) {		// Y0-Y11, 12bits
+		gpio_init( MSX_KEYMATRIX_ROW_PIN + i );
+		gpio_set_dir( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
+		#if MSX_KEYMATRIX_ROW_PULL_UP == 1
+			gpio_pull_up( MSX_KEYMATRIX_ROW_PIN + i );
+		#elif MSX_KEYMATRIX_ROW_PULL_UP == 2
+			gpio_pull_down( MSX_KEYMATRIX_ROW_PIN + i );
+		#endif
+	}
+	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
+		gpio_init( MSX_KEYMATRIX_RESULT_PIN + i );
+		gpio_set_dir( MSX_KEYMATRIX_RESULT_PIN + i, GPIO_OUT );
+	}
 
 	for( ;; ) {
 		//	Y‚ğ“¾‚é
