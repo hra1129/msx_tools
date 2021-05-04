@@ -353,7 +353,7 @@ static const KEYMAP_T keymap[] = {
 };
 
 // --------------------------------------------------------------------
-static uint8_t msx_key_matrix[16] = {
+static uint8_t volatile msx_key_matrix[16] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 };
@@ -388,11 +388,11 @@ static void initialization( void ) {
 // --------------------------------------------------------------------
 void response_core( void ) {
 	uint8_t i;
-	uint32_t matrix;
+	uint8_t matrix;
 	int y;
 	static const uint32_t x_mask = 0x0FF << MSX_KEYMATRIX_RESULT_PIN;
 	#if DEBUG_UART_ON
-		int i, j;
+		int j;
 		char s_buffer[32];
 	#endif
 
@@ -424,9 +424,8 @@ void response_core( void ) {
 		#endif
 
 		//	X‚ðo—Í‚·‚é
-		matrix = (int)msx_key_matrix[ y & 0x0F ] << MSX_KEYMATRIX_RESULT_PIN;
-		gpio_put_masked( x_mask, matrix );
-
+		matrix = msx_key_matrix[ y & 0x0F ];
+		gpio_put_masked( x_mask, (uint32_t)matrix << MSX_KEYMATRIX_RESULT_PIN );
 		gpio_put( MSX_KEYMATRIX_RESULT_PIN + 8, msx_key_matrix[ 12 ] & 1 );
 
 		#if DEBUG_UART_ON
@@ -486,7 +485,7 @@ void hid_task(void) {
 	if( tuh_hid_keyboard_get_report( dev_addr, &usb_keyboard_report ) == TUSB_ERROR_NONE ) {
 		memset( current_key_matrix, 0xFF, sizeof(current_key_matrix) );
 		update_key_matrix( current_key_matrix, &usb_keyboard_report );
-		memcpy( msx_key_matrix, current_key_matrix, sizeof(current_key_matrix) );
+		memcpy( (void*) msx_key_matrix, current_key_matrix, sizeof(current_key_matrix) );
 	}
 }
 
