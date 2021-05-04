@@ -158,13 +158,13 @@ static const KEYMAP_T keymap[] = {
 	{  7, 3 },		//	HID_KEY_TAB                0x2B
 	{  8, 0 },		//	HID_KEY_SPACE              0x2C
 	{  1, 2 },		//	HID_KEY_MINUS              0x2D
-	{  1, 2 },		//	HID_KEY_EQUAL              0x2E
-	{  1, 0 },		//	HID_KEY_BRACKET_LEFT       0x2F
-	{  1, 1 },		//	HID_KEY_BRACKET_RIGHT      0x30
+	{  1, 3 },		//	HID_KEY_EQUAL              0x2E
+	{  1, 5 },		//	HID_KEY_BRACKET_LEFT       0x2F
+	{  1, 6 },		//	HID_KEY_BRACKET_RIGHT      0x30
 	{  1, 4 },		//	HID_KEY_BACKSLASH          0x31
-	{ -1, 0 },		//	HID_KEY_EUROPE_1           0x32
+	{  2, 1 },		//	HID_KEY_EUROPE_1           0x32
 	{  1, 7 },		//	HID_KEY_SEMICOLON          0x33
-	{  0, 7 },		//	HID_KEY_APOSTROPHE         0x34
+	{  2, 0 },		//	HID_KEY_APOSTROPHE         0x34
 	{  7, 2 },		//	ëS/îº                      0x35
 	{  2, 2 },		//	HID_KEY_COMMA              0x36
 	{  2, 3 },		//	HID_KEY_PERIOD             0x37
@@ -200,7 +200,7 @@ static const KEYMAP_T keymap[] = {
 	{  9, 0 },		//	HID_KEY_KEYPAD_MULTIPLY    0x55
 	{ 10, 5 },		//	HID_KEY_KEYPAD_SUBTRACT    0x56
 	{  9, 1 },		//	HID_KEY_KEYPAD_ADD         0x57
-	{ -1, 0 },		//	HID_KEY_KEYPAD_ENTER       0x58
+	{  7, 7 },		//	HID_KEY_KEYPAD_ENTER       0x58
 	{  9, 4 },		//	HID_KEY_KEYPAD_1           0x59
 	{  9, 5 },		//	HID_KEY_KEYPAD_2           0x5A
 	{  9, 6 },		//	HID_KEY_KEYPAD_3           0x5B
@@ -247,8 +247,9 @@ static const KEYMAP_T keymap[] = {
 	{ -1, 0 },		//	                           0x84
 	{ -1, 0 },		//	                           0x85
 	{ -1, 0 },		//	                           0x86
-	{ -1, 0 },		//	                           0x87
+	{  2, 5 },		//	                           0x87  _
 	{  6, 4 },		//	Ç©Ç» (Kana)                0x88  Ç©Ç»
+	{  1, 4 },		//	                           0x89  Åè  
 	{ 11, 1 },		//	ïœä∑                       0x8A  é¿çs
 	{ 11, 3 },		//	ñ≥ïœä∑                     0x8B  éÊè¡
 	{ -1, 0 },		//	                           0x8C
@@ -385,6 +386,8 @@ static uint8_t volatile msx_key_matrix[16] = {
 
 // --------------------------------------------------------------------
 static void initialization( void ) {
+	uint8_t i;
+
 	board_init();
 
 	uart_init(UART_ID, BAUD_RATE);
@@ -394,6 +397,21 @@ static void initialization( void ) {
 	uart_set_format(UART_ID, 8, 2, UART_PARITY_NONE);
 
 	tusb_init();
+
+	//	Set the GPIO signal direction.
+	for( i = 0; i < 12; i++ ) {		// Y0-Y11, 12bits
+		gpio_init( MSX_KEYMATRIX_ROW_PIN + i );
+		gpio_set_dir( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
+		#if MSX_KEYMATRIX_ROW_PULL_UP == 1
+			gpio_pull_up( MSX_KEYMATRIX_ROW_PIN + i );
+		#elif MSX_KEYMATRIX_ROW_PULL_UP == 2
+			gpio_pull_down( MSX_KEYMATRIX_ROW_PIN + i );
+		#endif
+	}
+	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
+		gpio_init( MSX_KEYMATRIX_RESULT_PIN + i );
+		gpio_set_dir( MSX_KEYMATRIX_RESULT_PIN + i, GPIO_OUT );
+	}
 }
 
 // --------------------------------------------------------------------
@@ -412,29 +430,13 @@ static void initialization( void ) {
 
 // --------------------------------------------------------------------
 void response_core( void ) {
-	uint8_t i;
 	uint8_t matrix;
 	int y;
 	static const uint32_t x_mask = 0x0FF << MSX_KEYMATRIX_RESULT_PIN;
 	#if DEBUG_UART_ON
-		int j;
+		int i, j;
 		char s_buffer[32];
 	#endif
-
-	//	Set the GPIO signal direction.
-	for( i = 0; i < 12; i++ ) {		// Y0-Y11, 12bits
-		gpio_init( MSX_KEYMATRIX_ROW_PIN + i );
-		gpio_set_dir( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
-		#if MSX_KEYMATRIX_ROW_PULL_UP == 1
-			gpio_pull_up( MSX_KEYMATRIX_ROW_PIN + i );
-		#elif MSX_KEYMATRIX_ROW_PULL_UP == 2
-			gpio_pull_down( MSX_KEYMATRIX_ROW_PIN + i );
-		#endif
-	}
-	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
-		gpio_init( MSX_KEYMATRIX_RESULT_PIN + i );
-		gpio_set_dir( MSX_KEYMATRIX_RESULT_PIN + i, GPIO_OUT );
-	}
 
 	for( ;; ) {
 		//	Get Y
