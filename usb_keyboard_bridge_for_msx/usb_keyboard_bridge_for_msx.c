@@ -35,28 +35,46 @@
 //		0: Y3-Y0  に ROWアドレスが指定される
 //		1: Y11-Y0 に ROWアドレスをデコードした結果が指定される (ONE HOT)
 //
+//		0: ROW address is specified for Y3-Y0.
+//		1: The result of decoding the ROW address is specified for Y11-Y0 (ONE HOT)
+//
 #define MSX_KEYMATRIX_ROW_TYPE 1
 
+// --------------------------------------------------------------------
 //	MSX_KEYMATRIX_INV
 //		0: Y11-Y0 は正論理である
 //		1: Y11-Y0 は負論理である
 //
+//		0: Y11-Y0 is positive logic.
+//		1: Y11-Y0 is negative logic.
+//
 #define MSX_KEYMATRIX_INV 1
 
+// --------------------------------------------------------------------
 //	MSX_KEYMATRIX_ROW_PULL_UP
 //		0: Y0-Y11 の入力ピンに 内蔵 PULL UP/DOWN は使わない
 //		1: Y0-Y11 の入力ピンに 内蔵 PULL UP を使う
 //		2: Y0-Y11 の入力ピンに 内蔵 PULL DOWN を使う
 //
+//		0: Do not use the built-in PULL UP/DOWN on the Y0-Y11 input pins.
+//		1: Use built-in PULL UP for Y0-Y11 input pins
+//		2: Use built-in PULL DOWN for Y0-Y11 input pins
+//
 #define MSX_KEYMATRIX_ROW_PULL_UP 1
 
+// --------------------------------------------------------------------
 //	MSX_KEYMATRIX_ROW_PIN
 //		Y0 の GPIO番号。Y1-Y11 は、ここからインクリメントするかたちの連番
 //
+//		GPIO number of Y0. Y1-Y11 are sequential numbers that are incremented from here.
+//
 #define MSX_KEYMATRIX_ROW_PIN 2
 
+// --------------------------------------------------------------------
 //	MSX_KEYMATRIX_RESULT_PIN
 //		X0 の GPIO番号。X1-X7 は、ここからインクリメントする形の連番
+//
+//		GPIO number of X0. X1-X7 are sequential numbers that are incremented from here.
 //
 #define MSX_KEYMATRIX_RESULT_PIN 14
 
@@ -85,6 +103,13 @@ typedef struct {
 //				-1 にすると、そのキーは無視される。
 //			x_code: 
 //				MSXキーマトリクスのビット番号 0～7。
+//
+//		keymap[ USB key code ] = { y_code, x_code }
+//			y_code:
+//				MSX key matrix line number 0 to 15.
+//				If set to -1, the key will be ignored.
+//			x_code: 
+//				Bit numbers 0 to 7 of the MSX key matrix.
 //
 static const KEYMAP_T keymap[] = {
 	{ -1, 0 },		//	HID_KEY_NONE               0x00
@@ -223,7 +248,7 @@ static const KEYMAP_T keymap[] = {
 	{ -1, 0 },		//	                           0x85
 	{ -1, 0 },		//	                           0x86
 	{ -1, 0 },		//	                           0x87
-	{  6, 4 },		//	かな                       0x88
+	{  6, 4 },		//	かな (Kana)                0x88  かな
 	{ 11, 1 },		//	変換                       0x8A  実行
 	{ 11, 3 },		//	無変換                     0x8B  取消
 	{ -1, 0 },		//	                           0x8C
@@ -396,7 +421,7 @@ void response_core( void ) {
 		char s_buffer[32];
 	#endif
 
-	//	GPIOの信号の向きを設定
+	//	Set the GPIO signal direction.
 	for( i = 0; i < 12; i++ ) {		// Y0-Y11, 12bits
 		gpio_init( MSX_KEYMATRIX_ROW_PIN + i );
 		gpio_set_dir( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
@@ -412,7 +437,7 @@ void response_core( void ) {
 	}
 
 	for( ;; ) {
-		//	Yを得る
+		//	Get Y
 		#if MSX_KEYMATRIX_INV == 0
 			y = (gpio_get_all() >> MSX_KEYMATRIX_ROW_PIN) & 0x0FFF;
 		#else
@@ -423,7 +448,7 @@ void response_core( void ) {
 			y = encode( y );
 		#endif
 
-		//	Xを出力する
+		//	Output X
 		matrix = msx_key_matrix[ y & 0x0F ];
 		gpio_put_masked( x_mask, (uint32_t)matrix << MSX_KEYMATRIX_RESULT_PIN );
 		gpio_put( MSX_KEYMATRIX_RESULT_PIN + 8, msx_key_matrix[ 12 ] & 1 );
@@ -449,7 +474,7 @@ void response_core( void ) {
 }
 
 // --------------------------------------------------------------------
-//	hid_keyboard_report_t を key_matrix に反映させる
+//	Reflect hid_keyboard_report_t in key_matrix
 void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
 	uint8_t i;
 	const KEYMAP_T *p_keymap;
@@ -519,19 +544,19 @@ int main(void) {
 }
 
 // --------------------------------------------------------------------
-//	キーボードが接続されたときに呼び出されるコールバック
+//	Callback to be called when a keyboard is connected.
 void tuh_hid_keyboard_mounted_cb(uint8_t dev_addr) {
 	(void) dev_addr;
 }
 
 // --------------------------------------------------------------------
-//	キーボードが切断されたときに呼び出されるコールバック
+//	Callback to be called when the keyboard is disconnected.
 void tuh_hid_keyboard_unmounted_cb( uint8_t dev_addr ) {
 	(void) dev_addr;
 }
 
 // --------------------------------------------------------------------
-//	キーボードのキーが押されたり、放されたりすると呼び出される割り込み
+//	An interrupt that is called when a key on the keyboard is pressed or released.
 void tuh_hid_keyboard_isr( uint8_t dev_addr, xfer_result_t event ) {
 	(void) dev_addr;
 	(void) event;
