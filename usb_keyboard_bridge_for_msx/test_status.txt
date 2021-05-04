@@ -35,9 +35,9 @@ response_core()の処理内容
 		★MSX_KEYMATRIX_ROW_TYPE 未確認。
 
 	Xを出力する
-		★matrix に期待通りのビットパターンが得られているか未確認
-		★gpio_put_masked() の使い方が正しいか未確認。
-		★PAUSEキー状態が MSX_KEYMATRIX_RESULT_PIN+8 ピンに出力されているか未確認。
+		matrix に内部変数 msx_key_matrix[] の値が取り込まれていることを確認済み。
+		gpio_put_masked() の使い方について確認済み。
+		PAUSEキー状態が MSX_KEYMATRIX_RESULT_PIN+8 ピンに出力されているか確認済み。
 
 		DEBUG_UART_ON 1 で、キーマトリクスが UART出力されることを確認済み。
 
