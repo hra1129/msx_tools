@@ -21,7 +21,13 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 // --------------------------------------------------------------------
-
+//
+//  2021年05月05日: SONY HB-F500 Support を追加
+//      きんのじさん(@v9938 [twitter])のカスタムにより、HB-F500 で利用可能になりました
+//      そのサポートコードを追加
+//
+//  May/5th/2021: Added the Sony HB-F500 Support.
+//
 #include <stdio.h>
 #include <string.h>
 #include "pico/stdlib.h"
@@ -34,9 +40,11 @@
 //	MSX_KEYMATRIX_ROW_TYPE
 //		0: Y3-Y0  に ROWアドレスが指定される
 //		1: Y11-Y0 に ROWアドレスをデコードした結果が指定される (ONE HOT)
+//		2: X8-X4 に ROWアドレスが指定される、Y0にDIR(HB-F500)
 //
 //		0: ROW address is specified for Y3-Y0.
 //		1: The result of decoding the ROW address is specified for Y11-Y0 (ONE HOT)
+//		2: ROW address is specified at X8-X4, DIR at Y0 (HB-F500)
 //
 #define MSX_KEYMATRIX_ROW_TYPE 1
 
@@ -77,6 +85,29 @@
 //		GPIO number of X0. X1-X7 are sequential numbers that are incremented from here.
 //
 #define MSX_KEYMATRIX_RESULT_PIN 14
+
+// --------------------------------------------------------------------
+//  MSX_CAPS_LED_PIN
+//	    CAPS LED信号入力の GPIO番号。
+//
+//      GPIO number of the CAPS LED signal input.
+//
+#define MSX_CAPS_LED_PIN 26
+
+// --------------------------------------------------------------------
+//  MSX_KANA_LED_PIN
+//	    かな LED信号入力の GPIO番号。
+//
+//      GPIO number of the KANA LED signal input.
+//
+#define MSX_KANA_LED_PIN 27
+
+// --------------------------------------------------------------------
+//  PAUSE_KEY_SUPPORT
+//	    0: no
+//      1: yes
+//
+#define PAUSE_KEY_SUPPORT 0
 
 // --------------------------------------------------------------------
 #define UART_ID uart0
@@ -211,7 +242,7 @@ static const KEYMAP_T keymap[] = {
 	{ 10, 3 },		//	HID_KEY_KEYPAD_8           0x60
 	{ 10, 4 },		//	HID_KEY_KEYPAD_9           0x61
 	{  9, 4 },		//	HID_KEY_KEYPAD_0           0x62
-	{ -1, 0 },		//	HID_KEY_KEYPAD_DECIMAL     0x63
+	{ 10, 7 },		//	HID_KEY_KEYPAD_DECIMAL     0x63
 	{ -1, 0 },		//	HID_KEY_EUROPE_2           0x64
 	{  6, 2 },		//	HID_KEY_APPLICATION        0x65  GRAPH
 	{ -1, 0 },		//	HID_KEY_POWER              0x66
@@ -379,10 +410,28 @@ static const KEYMAP_T keymap[] = {
 };
 
 // --------------------------------------------------------------------
-static uint8_t volatile msx_key_matrix[16] = {
+static uint8_t msx_key_matrix[16] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 };
+
+static int y_table[16] = {
+	0x0, 0x8, 0x4, 0xC, 0x2, 0xA, 0x6, 0xE, 
+	0x1, 0x9, 0x5, 0xD, 0x3, 0xB, 0x7, 0xF, 
+};
+
+static uint8_t KeyLEDFlags = 0;
+
+// --------------------------------------------------------------------
+static void gpio_init_sub( uint gpio, bool dir_out ) {
+	gpio_init( gpio);
+	gpio_set_dir( gpio, dir_out );
+	#if MSX_KEYMATRIX_ROW_PULL_UP == 1
+		gpio_pull_up( gpio );
+	#elif MSX_KEYMATRIX_ROW_PULL_UP == 2
+		gpio_pull_down( gpio );
+	#endif
+}
 
 // --------------------------------------------------------------------
 static void initialization( void ) {
@@ -400,18 +449,15 @@ static void initialization( void ) {
 
 	//	Set the GPIO signal direction.
 	for( i = 0; i < 12; i++ ) {		// Y0-Y11, 12bits
-		gpio_init( MSX_KEYMATRIX_ROW_PIN + i );
-		gpio_set_dir( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
-		#if MSX_KEYMATRIX_ROW_PULL_UP == 1
-			gpio_pull_up( MSX_KEYMATRIX_ROW_PIN + i );
-		#elif MSX_KEYMATRIX_ROW_PULL_UP == 2
-			gpio_pull_down( MSX_KEYMATRIX_ROW_PIN + i );
-		#endif
+		gpio_init_sub( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
 	}
 	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
-		gpio_init( MSX_KEYMATRIX_RESULT_PIN + i );
-		gpio_set_dir( MSX_KEYMATRIX_RESULT_PIN + i, GPIO_OUT );
+		gpio_init_sub( MSX_KEYMATRIX_RESULT_PIN + i, GPIO_OUT );
 	}
+	// LED Input (CAPS)
+	gpio_init_sub( MSX_CAPS_LED_PIN, GPIO_IN );
+	// LED Input (KANA)
+	gpio_init_sub( MSX_KANA_LED_PIN, GPIO_IN );
 }
 
 // --------------------------------------------------------------------
@@ -430,7 +476,7 @@ static void initialization( void ) {
 
 // --------------------------------------------------------------------
 void response_core( void ) {
-	uint8_t matrix;
+	uint32_t matrix;
 	int y;
 	static const uint32_t x_mask = 0x0FF << MSX_KEYMATRIX_RESULT_PIN;
 	#if DEBUG_UART_ON
@@ -439,21 +485,38 @@ void response_core( void ) {
 	#endif
 
 	for( ;; ) {
-		//	Get Y
-		#if MSX_KEYMATRIX_INV == 0
-			y = (gpio_get_all() >> MSX_KEYMATRIX_ROW_PIN) & 0x0FFF;
+		#if MSX_KEYMATRIX_ROW_TYPE == 2
+			//	Wait until the DIR signal goes to L level.
+			while( ( gpio_get_all() & (1 << MSX_KEYMATRIX_ROW_PIN) ) !=0 );
+			//	Switch X[4:7] to input
+			gpio_set_dir_in_masked( 0x0F0 << MSX_KEYMATRIX_RESULT_PIN );
+			//	Wait until the DIR signal goes to H level.
+			while( ( gpio_get_all() & (1 << MSX_KEYMATRIX_ROW_PIN) ) ==0 );
+
+			// Get the Y address to be input to X[4:7].
+			// Y address is in reverse BIT order, so use y_table to reverse it.
+			y = y_table[ ( gpio_get_all() >> (MSX_KEYMATRIX_RESULT_PIN + 4) ) & 0x00F ];
+
+			// Prepare for X output Set X[4:7] to output again.
+			gpio_set_dir_out_masked( 0x0FF << MSX_KEYMATRIX_RESULT_PIN );
+
 		#else
-			y = ((gpio_get_all() >> MSX_KEYMATRIX_ROW_PIN) & 0x0FFF) ^ 0x0FFF;
+			//	Get Y
+			#if MSX_KEYMATRIX_INV == 0
+				y = (gpio_get_all() >> MSX_KEYMATRIX_ROW_PIN) & 0x0FFF;
+			#else
+				y = ((gpio_get_all() >> MSX_KEYMATRIX_ROW_PIN) & 0x0FFF) ^ 0x0FFF;
+			#endif
+
+			#if MSX_KEYMATRIX_ROW_TYPE == 1
+				y = encode( y );
+			#endif
 		#endif
 
-		#if MSX_KEYMATRIX_ROW_TYPE == 1
-			y = encode( y );
-		#endif
-
+		//	Get the key matrix specified by Y address.
+		matrix = (uint32_t)msx_key_matrix[ y & 0x0F ] << MSX_KEYMATRIX_RESULT_PIN;
 		//	Output X
-		matrix = msx_key_matrix[ y & 0x0F ];
-		gpio_put_masked( x_mask, (uint32_t)matrix << MSX_KEYMATRIX_RESULT_PIN );
-		gpio_put( MSX_KEYMATRIX_RESULT_PIN + 8, msx_key_matrix[ 12 ] & 1 );
+		gpio_put_masked( x_mask, matrix );
 
 		#if DEBUG_UART_ON
 			uart_puts( UART_ID, "\x1B" "7Y :76543210\r\n" );
@@ -503,7 +566,7 @@ void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
 }
 
 // --------------------------------------------------------------------
-void hid_task(void) {
+void hid_task( void ) {
 	uint8_t const dev_addr = 1;
 	uint8_t current_key_matrix[ sizeof(msx_key_matrix) ];
 
@@ -517,7 +580,7 @@ void hid_task(void) {
 }
 
 //--------------------------------------------------------------------+
-void led_blinking_task(void) {
+void led_blinking_task( void ) {
     const uint32_t interval_ms = 250;
     static uint32_t start_ms = 0;
 
@@ -532,7 +595,65 @@ void led_blinking_task(void) {
 }
 
 // --------------------------------------------------------------------
-int main(void) {
+void setKeyboardLeds( uint8_t Keyleds ) {
+	if ( Keyleds != KeyLEDFlags ){
+		uint8_t const addr = 1;
+		KeyLEDFlags = Keyleds;
+
+		tusb_control_request_t ledreq = {
+			.bmRequestType_bit.recipient	= TUSB_REQ_RCPT_INTERFACE,
+			.bmRequestType_bit.type			= TUSB_REQ_TYPE_CLASS,
+			.bmRequestType_bit.direction	= TUSB_DIR_OUT,
+			.bRequest						= HID_REQ_CONTROL_SET_REPORT,
+			.wValue							= HID_REPORT_TYPE_OUTPUT << 8,
+			.wIndex							= 0,    // Interface number
+			.wLength						= sizeof (KeyLEDFlags),
+		};
+
+		tuh_control_xfer( addr, &ledreq, &KeyLEDFlags, NULL );
+	}
+}
+
+// --------------------------------------------------------------------
+//	KEYBOARD_LED_NUMLOCK    = TU_BIT(0), ///< Num Lock LED
+//	KEYBOARD_LED_CAPSLOCK   = TU_BIT(1), ///< Caps Lock LED
+//	KEYBOARD_LED_SCROLLLOCK = TU_BIT(2), ///< Scroll Lock LED
+//	KEYBOARD_LED_COMPOSE    = TU_BIT(3), ///< Composition Mode
+//	KEYBOARD_LED_KANA       = TU_BIT(4)  ///< Kana mode
+//
+void led_and_pause_key_task( void ) {
+	static uint8_t Keyleds = 0;
+
+	//	Pause Key
+	#if PAUSE_KEY_SUPPORT
+		gpio_put( MSX_KEYMATRIX_RESULT_PIN + 8, msx_key_matrix[ 12 ] & 1 );
+	#endif
+
+	//	KEYBOARD LED Process
+	if( gpio_get( MSX_CAPS_LED_PIN ) == 0 ) {
+		Keyleds |= KEYBOARD_LED_CAPSLOCK;
+	}
+	else {
+		Keyleds &= KEYBOARD_LED_CAPSLOCK ^ 0xFF;
+	}
+	
+	//	規格上はKANA LEDは存在するが、SCROLLLOCKで代用する
+	//	(かなLED を搭載しているキーボードがあまり存在しないため)
+	//
+	//	KANA LED exists in the standard, but SCROLLLOCK is used instead.
+	//	(Since there are not many keyboards with kana LEDs, it is not possible to use them.)
+	//
+	if( gpio_get( MSX_KANA_LED_PIN ) == 0 ) {
+		Keyleds |= KEYBOARD_LED_SCROLLLOCK;
+	}
+	else {
+		Keyleds &= KEYBOARD_LED_SCROLLLOCK ^ 0xFF;
+	}
+	setKeyboardLeds( Keyleds );
+}
+
+// --------------------------------------------------------------------
+int main( void ) {
 
 	initialization();
 	multicore_launch_core1( response_core );
@@ -541,6 +662,7 @@ int main(void) {
 		tuh_task();
 		led_blinking_task();
 		hid_task();
+		led_and_pause_key_task();
 	}
 	return 0;
 }

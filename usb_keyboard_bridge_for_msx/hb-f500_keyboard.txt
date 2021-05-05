@@ -1,0 +1,24 @@
+SONY HB-F500 Keyboard support customized By @v9938(twitter)
+-------------------------------------------------------------------------------
+
+--------------------------------------------------------------------
+  DIN Pin : PICO Pin | Function
+--------------------------------------------------------------------
+   1      : 32(GP27) | KANA LED (active LOW)
+   2      : 31(GP26) | CAPS LED (active LOW)
+   3      : 19(GP14) | KEY DATA0 (X0 Data)
+   4      : 20(GP15) | KEY DATA1 (X1 Data)
+   5      : 21(GP16) | KEY DATA2 (X2 Data)
+   6      : 22(GP17) | KEY DATA3 (X3 Data)
+   7      : 24(GP18) | KEY DATA4 (X4 Data / Y3 Data)
+   8      : 25(GP19) | KEY DATA5 (X5 Data / Y2 Data)
+   9      : 26(GP20) | KEY DATA6 (X6 Data / Y1 Data)
+   10     : 27(GP21) | KEY DATA7 (X7 Data / Y0 Data)
+   11     : 4 (GP2)  | KEY CS
+   12     : 40(VBUS) | +5V
+   13     : 38(GND)  | GND
+
+   PICO IO signal level 3.3V, So DON'T direct connect LED/X/CS signals.
+   Please connect with resistors of about 10Kohm.
+
+   Å¶PicoÇÃIOÇÕ3.3VÇ»ÇÃÇ≈íºåãÇÕÇπÇ∏Ç…10KohmíˆìxÇÃíÔçRÇíºóÒÇ…ë}ì¸Ç∑ÇÈÇ±Ç∆
