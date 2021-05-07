@@ -5,18 +5,12 @@
 // --------------------------------------------------------------------
 
 #include <stdio.h>
+#include "../encode.h"
 
 // --------------------------------------------------------------------
 //	‚±‚±‚É encode() ‚ðƒRƒsƒy
 	static int inline encode( int y ) {
-		int i;
-
-		for( i = 0; i < 12; i++ ) {
-			if( y == (1 << i) ) {
-				return i;
-			}
-		}
-		return 15;
+		return encode_table[y];
 	}
 
 // --------------------------------------------------------------------
@@ -49,10 +43,10 @@ int main( int argc, char argv[] ) {
 	test_item( 0x800, 0x0B );
 
 	test_item( 0x000, 0x0F );
-	test_item( 0xFFF, 0x0F );
-	test_item( 0xAAA, 0x0F );
-	test_item( 0x555, 0x0F );
-	test_item( 0x123, 0x0F );
+	test_item( 0xFFF, 0x0B );
+	test_item( 0xAAA, 0x0B );
+	test_item( 0x555, 0x0A );
+	test_item( 0x123, 0x08 );
 
 	(void) argc;
 	(void) argv;
