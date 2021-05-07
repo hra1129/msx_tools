@@ -203,15 +203,10 @@ static void initialization( void ) {
 
 // --------------------------------------------------------------------
 #if MSX_KEYMATRIX_ROW_TYPE == 1
-	static int inline encode( int y ) {
-		int i;
+	#include "encode.h"
 
-		for( i = 0; i < 12; i++ ) {
-			if( y == (1 << i) ) {
-				return i;
-			}
-		}
-		return 15;
+	static int inline encode( int y ) {
+		return encode_table[y];
 	}
 #endif
 
