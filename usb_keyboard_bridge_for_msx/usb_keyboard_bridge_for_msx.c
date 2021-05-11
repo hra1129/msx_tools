@@ -79,6 +79,16 @@
 #define MSX_KEYMATRIX_ROW_PIN 2
 
 // --------------------------------------------------------------------
+//	MSX_X_HIZ_SEL
+//		0: X出力は H or L である
+//		1: X出力は HiZ or L である
+//
+//		0: X output is H or L
+//		1: X output is HiZ or L
+//
+#define MSX_X_HIZ_SEL 1
+
+// --------------------------------------------------------------------
 //	MSX_KEYMATRIX_RESULT_PIN
 //		X0 の GPIO番号。X1-X7 は、ここからインクリメントする形の連番
 //
@@ -234,8 +244,9 @@ void response_core( void ) {
 			y = y_table[ ( gpio_get_all() >> (MSX_KEYMATRIX_RESULT_PIN + 4) ) & 0x00F ];
 
 			// Prepare for X output Set X[4:7] to output again.
-			gpio_set_dir_out_masked( 0x0FF << MSX_KEYMATRIX_RESULT_PIN );
-
+			#if MSX_X_HIZ_SEL == 0
+				gpio_set_dir_out_masked( 0x0FF << MSX_KEYMATRIX_RESULT_PIN );
+			#endif
 		#else
 			//	Get Y
 			#if MSX_KEYMATRIX_INV == 0
@@ -252,7 +263,12 @@ void response_core( void ) {
 		//	Get the key matrix specified by Y address.
 		matrix = (uint32_t)msx_key_matrix[ y & 0x0F ] << MSX_KEYMATRIX_RESULT_PIN;
 		//	Output X
-		gpio_put_masked( x_mask, matrix );
+		#if MSX_X_HIZ_SEL == 0
+			gpio_put_masked( x_mask, matrix );
+		#else
+			gpio_set_dir_masked( x_mask, ~matrix );
+			gpio_put_masked( x_mask, 0 );
+		#endif
 
 		#if DEBUG_UART_ON
 			uart_puts( UART_ID, "\x1B" "7Y :76543210\r\n" );
