@@ -66,8 +66,10 @@ USB Keybard bridge for MSX
 5. 注意点
 	Raspberry Pi Pico の I/O電圧は 3.3V です。
 	一方で MSX は 5V です。
-	MSX → Pico の接続は、10kΩ程度の抵抗器を挟んで接続して下さい。
-	Pico → MSX の接続は、直結でOKです。
+	Pico → MSX の接続は、たいてい直結でOKだと思いますが、必要に応じて
+	レベル変換IC等を経由して接続して下さい。
+	MSX → Pico の接続は、必要に応じて 10kΩ程度の抵抗器を挟んで接続するか、
+	レベル変換IC等を経由して接続して下さい。
 
 6. メモ
 	MSXのハード的には、PPI(i8255) の Register C の bit3～bit0 に「行」を
