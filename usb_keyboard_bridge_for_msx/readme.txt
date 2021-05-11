@@ -63,6 +63,12 @@ USB Keybard bridge for MSX
 	//
 	#define MSX_KEYMATRIX_ROW_PULL_UP 1
 
+	//	MSX_X_HIZ_SEL
+	//		0: X出力は H or L である
+	//		1: X出力は HiZ or L である
+	//
+	#define MSX_X_HIZ_SEL 1
+
 5. 注意点
 	Raspberry Pi Pico の I/O電圧は 3.3V です。
 	一方で MSX は 5V です。
@@ -70,6 +76,13 @@ USB Keybard bridge for MSX
 	レベル変換IC等を経由して接続して下さい。
 	MSX → Pico の接続は、必要に応じて 10kΩ程度の抵抗器を挟んで接続するか、
 	レベル変換IC等を経由して接続して下さい。
+
+	Y信号がデコードされているタイプの場合、L か HiZ の2値を採るケースが多いと
+	思います。この場合、本体の X信号を受ける部分で PullUp されているはずです。
+	そのような構成の本体で、Pico から X信号に H を出してしまうと、Y信号により
+	選択されている行に所属する本体側のキーが押された場合に競合が発生してNGです。
+	そのような構成の本体で利用する場合は、MSX_X_HIZ_SEL を 1 にしてください。
+	X が L か HiZ になるように設定されます。
 
 6. メモ
 	MSXのハード的には、PPI(i8255) の Register C の bit3～bit0 に「行」を
