@@ -59,16 +59,18 @@
 #define MSX_KEYMATRIX_INV 1
 
 // --------------------------------------------------------------------
-//	MSX_KEYMATRIX_ROW_PULL_UP
-//		0: Y0-Y11 の入力ピンに 内蔵 PULL UP/DOWN は使わない
-//		1: Y0-Y11 の入力ピンに 内蔵 PULL UP を使う
-//		2: Y0-Y11 の入力ピンに 内蔵 PULL DOWN を使う
+//	MSX_KEYMATRIX_Y_PULL_UP
+//	MSX_KEYMATRIX_X_PULL_UP
+//		0: Y0-Y11, X0-X8 の入力ピンに 内蔵 PULL UP/DOWN は使わない
+//		1: Y0-Y11, X0-X8 の入力ピンに 内蔵 PULL UP を使う
+//		2: Y0-Y11, X0-X8 の入力ピンに 内蔵 PULL DOWN を使う
 //
-//		0: Do not use the built-in PULL UP/DOWN on the Y0-Y11 input pins.
-//		1: Use built-in PULL UP for Y0-Y11 input pins
-//		2: Use built-in PULL DOWN for Y0-Y11 input pins
+//		0: Do not use the built-in PULL UP/DOWN on the Y0-Y11, X0-X8 input pins.
+//		1: Use built-in PULL UP for Y0-Y11, X0-X8 input pins
+//		2: Use built-in PULL DOWN for Y0-Y11, X0-X8 input pins
 //
-#define MSX_KEYMATRIX_ROW_PULL_UP 1
+#define MSX_KEYMATRIX_Y_PULL_UP 1
+#define MSX_KEYMATRIX_X_PULL_UP 0
 
 // --------------------------------------------------------------------
 //	MSX_KEYMATRIX_ROW_PIN
@@ -165,17 +167,6 @@ static int y_table[16] = {
 static uint8_t KeyLEDFlags = 0;
 
 // --------------------------------------------------------------------
-static void gpio_init_sub( uint gpio, bool dir_out ) {
-	gpio_init( gpio);
-	gpio_set_dir( gpio, dir_out );
-	#if MSX_KEYMATRIX_ROW_PULL_UP == 1
-		gpio_pull_up( gpio );
-	#elif MSX_KEYMATRIX_ROW_PULL_UP == 2
-		gpio_pull_down( gpio );
-	#endif
-}
-
-// --------------------------------------------------------------------
 static void gpio_init_sub_pull_up( uint gpio, bool dir_out ) {
 	gpio_init( gpio);
 	gpio_set_dir( gpio, dir_out );
@@ -185,6 +176,7 @@ static void gpio_init_sub_pull_up( uint gpio, bool dir_out ) {
 // --------------------------------------------------------------------
 static void initialization( void ) {
 	uint8_t i;
+	int gpio;
 
 	board_init();
 
@@ -198,10 +190,28 @@ static void initialization( void ) {
 
 	//	Set the GPIO signal direction.
 	for( i = 0; i < 12; i++ ) {		// Y0-Y11, 12bits
-		gpio_init_sub( MSX_KEYMATRIX_ROW_PIN + i, GPIO_IN );
+		gpio = MSX_KEYMATRIX_ROW_PIN + i;
+		gpio_init( gpio );
+		gpio_set_dir( gpio, GPIO_IN );
+		#if MSX_KEYMATRIX_Y_PULL_UP == 1
+			gpio_set_pulls( gpio, true, false );		//	PULL UP
+		#elif MSX_KEYMATRIX_Y_PULL_UP == 2
+			gpio_set_pulls( gpio, false, true );		//	PULL DOWN
+		#else
+			gpio_set_pulls( gpio, false, false );
+		#endif
 	}
 	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
-		gpio_init_sub( MSX_KEYMATRIX_RESULT_PIN + i, GPIO_OUT );
+		gpio = MSX_KEYMATRIX_RESULT_PIN + i;
+		gpio_init( gpio );
+		gpio_set_dir( gpio, GPIO_OUT );
+		#if MSX_KEYMATRIX_X_PULL_UP == 1
+			gpio_set_pulls( gpio, true, false );		//	PULL UP
+		#elif MSX_KEYMATRIX_X_PULL_UP == 2
+			gpio_set_pulls( gpio, false, true );		//	PULL DOWN
+		#else
+			gpio_set_pulls( gpio, false, false );
+		#endif
 	}
 	// LED Input (CAPS)
 	gpio_init_sub_pull_up( MSX_CAPS_LED_PIN, GPIO_IN );
@@ -214,10 +224,6 @@ static void initialization( void ) {
 // --------------------------------------------------------------------
 #if MSX_KEYMATRIX_ROW_TYPE == 1
 	#include "encode.h"
-
-	static int inline encode( int y ) {
-		return encode_table[y];
-	}
 #endif
 
 // --------------------------------------------------------------------
@@ -228,6 +234,11 @@ void response_core( void ) {
 	#if DEBUG_UART_ON
 		int i, j;
 		char s_buffer[32];
+	#endif
+
+	//	Output X
+	#if MSX_X_HIZ_SEL == 1 && MSX_KEYMATRIX_ROW_TYPE != 2
+		gpio_put_masked( x_mask, 0 );
 	#endif
 
 	for( ;; ) {
@@ -246,6 +257,8 @@ void response_core( void ) {
 			// Prepare for X output Set X[4:7] to output again.
 			#if MSX_X_HIZ_SEL == 0
 				gpio_set_dir_out_masked( 0x0FF << MSX_KEYMATRIX_RESULT_PIN );
+			#else
+				gpio_put_masked( x_mask, 0 );
 			#endif
 		#else
 			//	Get Y
@@ -256,7 +269,7 @@ void response_core( void ) {
 			#endif
 
 			#if MSX_KEYMATRIX_ROW_TYPE == 1
-				y = encode( y );
+				y = encode_table[ y ];
 			#endif
 		#endif
 
@@ -267,7 +280,6 @@ void response_core( void ) {
 			gpio_put_masked( x_mask, matrix );
 		#else
 			gpio_set_dir_masked( x_mask, ~matrix );
-			gpio_put_masked( x_mask, 0 );
 		#endif
 
 		#if DEBUG_UART_ON
