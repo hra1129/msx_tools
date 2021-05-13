@@ -1,0 +1,2 @@
+zma SCCTEST.ASM SCCTEST.COM
+pause

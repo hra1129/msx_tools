@@ -1,0 +1,480 @@
+Z80 Macro Assembler ZMA v1.0.15
+=====================================================
+Programmed by t.hara
+
+<< code >>
+[	INCLUDE ".//msxbios.asm"] begin
+[	INCLUDE ".//msxbios.asm"] end
+
+[	INCLUDE ".//msxdos1.asm"] begin
+[	INCLUDE ".//msxdos1.asm"] end
+
+[	ORG 0X100]
+	code address: 0x000100
+
+[ENTRY ::]
+	global label address: 0x000100
+
+[	LD SP , [ TPA_BOTTOM ]] Z80:22cyc, R800:8cyc
+000100: ed 7b 06 00
+
+[	LD DE , MSG_ENTRY] Z80:11cyc, R800:3cyc
+000104: 11 76 01
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+000107: cd 65 01
+
+[	LD A , 0X01] Z80:8cyc, R800:2cyc
+00010a: 3e 01
+
+[	LD H , 0X40] Z80:8cyc, R800:2cyc
+00010c: 26 40
+
+[	CALL ENASLT] Z80:18cyc, R800:5cyc
+00010e: cd 24 00
+
+[	LD A , 0X01] Z80:8cyc, R800:2cyc
+000111: 3e 01
+
+[	LD H , 0X80] Z80:8cyc, R800:2cyc
+000113: 26 80
+
+[	CALL ENASLT] Z80:18cyc, R800:5cyc
+000115: cd 24 00
+
+[	LD A , 0X3F] Z80:8cyc, R800:2cyc
+000118: 3e 3f
+
+[	LD [ SCC_MODE_REGISTER ] , A] Z80:14cyc, R800:6cyc
+00011a: 32 fe bf
+
+[	LD HL , 0X4000] Z80:11cyc, R800:3cyc
+00011d: 21 00 40
+
+[	LD A , [ HL ]] Z80:8cyc, R800:4cyc
+000120: 7e
+
+[	CPL] Z80:5cyc, R800:1cyc
+000121: 2f
+
+[	LD [ HL ] , A] Z80:8cyc, R800:4cyc
+000122: 77
+
+[	PUSH AF] Z80:12cyc, R800:6cyc
+000123: f5
+
+[	PUSH HL] Z80:12cyc, R800:6cyc
+000124: e5
+
+[	CP A , [ HL ]] Z80:8cyc, R800:4cyc
+000125: be
+
+[	LD DE , MSG_SUCCESS] Z80:11cyc, R800:3cyc
+000126: 11 b1 01
+
+[	JP Z , SKIP1] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000129: ca 2f 01
+
+[	LD DE , MSG_ERROR] Z80:11cyc, R800:3cyc
+00012c: 11 bc 01
+
+[SKIP1 :]
+	label address: 0x00012f
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+00012f: cd 65 01
+
+[	XOR A , A] Z80:5cyc, R800:1cyc
+000132: af
+
+[	LD [ 0XFCA2 ] , A] Z80:14cyc, R800:6cyc
+000133: 32 a2 fc
+
+[	EI] Z80:5cyc, R800:1cyc
+000136: fb
+
+[WAIT_LOOP :]
+	label address: 0x000137
+
+[	LD A , [ 0XFCA2 ]] Z80:14cyc, R800:6cyc
+000137: 3a a2 fc
+
+[	CP A , 90] Z80:8cyc, R800:2cyc
+00013a: fe 5a
+
+[	JP C , WAIT_LOOP] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+00013c: da 37 01
+
+[	POP HL] Z80:11cyc, R800:5cyc
+00013f: e1
+
+[	POP AF] Z80:11cyc, R800:5cyc
+000140: f1
+
+[	CP A , [ HL ]] Z80:8cyc, R800:4cyc
+000141: be
+
+[	LD DE , MSG_SUCCESS] Z80:11cyc, R800:3cyc
+000142: 11 b1 01
+
+[	JP Z , SKIP2] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000145: ca 4b 01
+
+[	LD DE , MSG_ERROR] Z80:11cyc, R800:3cyc
+000148: 11 bc 01
+
+[SKIP2 :]
+	label address: 0x00014b
+
+[	CALL PUTS] Z80:18cyc, R800:5cyc
+00014b: cd 65 01
+
+[	LD A , [ RAMAD1 ]] Z80:14cyc, R800:6cyc
+00014e: 3a 42 f3
+
+[	LD H , 0X40] Z80:8cyc, R800:2cyc
+000151: 26 40
+
+[	CALL ENASLT] Z80:18cyc, R800:5cyc
+000153: cd 24 00
+
+[	LD A , [ RAMAD2 ]] Z80:14cyc, R800:6cyc
+000156: 3a 43 f3
+
+[	LD H , 0X80] Z80:8cyc, R800:2cyc
+000159: 26 80
+
+[	CALL ENASLT] Z80:18cyc, R800:5cyc
+00015b: cd 24 00
+
+[	LD B , 0] Z80:8cyc, R800:2cyc
+00015e: 06 00
+
+[	LD C , D1F_TERM0] Z80:8cyc, R800:2cyc
+000160: 0e 00
+
+[	JP BDOS] Z80:11cyc, R800:5cyc
+000162: c3 05 00
+
+[	INCLUDE ".//stdio.asm"] begin
+[	SCOPE PUTS]
+	Scope path: PUTS:
+
+[PUTS ::]
+	global label address: 0x000165
+
+[	LD A , [ DE ]] Z80:8cyc, R800:4cyc
+000165: 1a
+
+[	INC DE] Z80:7cyc, R800:1cyc
+000166: 13
+
+[	OR A , A] Z80:5cyc, R800:1cyc
+000167: b7
+
+[	RET Z] Z80:12cyc(branch), 6cyc(through), R800:5cyc(branch), 1cyc(through)
+000168: c8
+
+[	PUSH DE] Z80:12cyc, R800:6cyc
+000169: d5
+
+[	LD C , D1F_DIRIO] Z80:8cyc, R800:2cyc
+00016a: 0e 06
+
+[	LD E , A] Z80:5cyc, R800:2cyc
+00016c: 5f
+
+[	CALL BDOS] Z80:18cyc, R800:5cyc
+00016d: cd 05 00
+
+[	POP DE] Z80:11cyc, R800:5cyc
+000170: d1
+
+[	JR PUTS] Z80:13cyc, R800:3cyc
+000171: 18 f2
+
+[	ENDSCOPE]
+	Scope path: 
+
+[	INCLUDE ".//stdio.asm"] end
+
+[MSG_CRLF ::]
+	global label address: 0x000173
+
+[	DB 0X0D , 0X0A , 0]
+000173: 0d 0a 00
+
+[MSG_ENTRY ::]
+	global label address: 0x000176
+
+[	DS "SoundCartridge TEST Programmed by HRA! 2021\r\n"]
+000176: 53 6f 75 6e 64 43 61 72
+00017e: 74 72 69 64 67 65 20 54
+000186: 45 53 54 20 50 72 6f 67
+00018e: 72 61 6d 6d 65 64 20 62
+000196: 79 20 48 52 41 21 20 32
+00019e: 30 32 31 0d 0a
+
+[	DS "Slot#1 only\r\n"]
+0001a3: 53 6c 6f 74 23 31 20 6f
+0001ab: 6e 6c 79 0d 0a
+
+[	DB 0]
+0001b0: 00
+
+[MSG_SUCCESS ::]
+	global label address: 0x0001b1
+
+[	DS "Success.\r\n"]
+0001b1: 53 75 63 63 65 73 73 2e
+0001b9: 0d 0a
+
+[	DB 0]
+0001bb: 00
+
+[MSG_ERROR ::]
+	global label address: 0x0001bc
+
+[	DS "Error.\r\n"]
+0001bc: 45 72 72 6f 72 2e 0d 0a
+
+[	DB 0]
+0001c4: 00
+
+<< label >>
+BDOS 5 ( 0x5 )
+BEEP 192 ( 0xc0 )
+BIGFIL 363 ( 0x16b )
+BOTTOM 64584 ( 0xfc48 )
+BREAKV 62245 ( 0xf325 )
+BREAKX 183 ( 0xb7 )
+CALATR 135 ( 0x87 )
+CALBAS 345 ( 0x159 )
+CALLF 48 ( 0x30 )
+CALPAT 132 ( 0x84 )
+CALSLT 28 ( 0x1c )
+CHGCAP 306 ( 0x132 )
+CHGCLR 98 ( 0x62 )
+CHGCPU 384 ( 0x180 )
+CHGET 159 ( 0x9f )
+CHGMOD 95 ( 0x5f )
+CHGSND 309 ( 0x135 )
+CHKRAM 0 ( 0x0 )
+CHPUT 162 ( 0xa2 )
+CHRGTR 16 ( 0x10 )
+CHSNS 156 ( 0x9c )
+CLIKSW 62427 ( 0xf3db )
+CLPRIM 62348 ( 0xf38c )
+CLRSPR 105 ( 0x69 )
+CLS 195 ( 0xc3 )
+CNSDFG 62430 ( 0xf3de )
+CNVCHR 171 ( 0xab )
+CSRX 62429 ( 0xf3dd )
+CSRY 62428 ( 0xf3dc )
+D1E_EOF 199 ( 0xc7 )
+D1F_ALLOC 27 ( 0x1b )
+D1F_AUXIN 3 ( 0x3 )
+D1F_AUXOUT 4 ( 0x4 )
+D1F_BUFIN 10 ( 0xa )
+D1F_CONIN 1 ( 0x1 )
+D1F_CONOUT 2 ( 0x2 )
+D1F_CONST 11 ( 0xb )
+D1F_CPMVER 12 ( 0xc )
+D1F_CURDRV 25 ( 0x19 )
+D1F_DIRIN 7 ( 0x7 )
+D1F_DIRIO 6 ( 0x6 )
+D1F_DPARM 49 ( 0x31 )
+D1F_DSKRST 13 ( 0xd )
+D1F_FCLOSE 16 ( 0x10 )
+D1F_FDEL 19 ( 0x13 )
+D1F_FMAKE 22 ( 0x16 )
+D1F_FOPEN 15 ( 0xf )
+D1F_FREN 23 ( 0x17 )
+D1F_FSIZE 35 ( 0x23 )
+D1F_GDATE 42 ( 0x2a )
+D1F_GTIME 44 ( 0x2c )
+D1F_INNOE 8 ( 0x8 )
+D1F_LOGIN 24 ( 0x18 )
+D1F_LSTOUT 5 ( 0x5 )
+D1F_RDABS 47 ( 0x2f )
+D1F_RDBLK 39 ( 0x27 )
+D1F_RDRND 33 ( 0x21 )
+D1F_RDSEQ 20 ( 0x14 )
+D1F_SDATE 43 ( 0x2b )
+D1F_SELDSK 14 ( 0xe )
+D1F_SETDTA 26 ( 0x1a )
+D1F_SETRND 36 ( 0x24 )
+D1F_SFIRST 17 ( 0x11 )
+D1F_SNEXT 18 ( 0x12 )
+D1F_STIME 45 ( 0x2d )
+D1F_STROUT 9 ( 0x9 )
+D1F_TERM0 0 ( 0x0 )
+D1F_VERIFY 46 ( 0x2e )
+D1F_WRABS 48 ( 0x30 )
+D1F_WRBLK 38 ( 0x26 )
+D1F_WRRND 34 ( 0x22 )
+D1F_WRSEQ 21 ( 0x15 )
+D1F_WRZER 40 ( 0x28 )
+DCOMPR 32 ( 0x20 )
+DEVICE 64921 ( 0xfd99 )
+DISKVE 62243 ( 0xf323 )
+DISSCR 65 ( 0x41 )
+DMA 128 ( 0x80 )
+DSPFNK 207 ( 0xcf )
+ENASCR 68 ( 0x44 )
+ENASLT 36 ( 0x24 )
+ENTRY 256 ( 0x100 )
+EOL 360 ( 0x168 )
+ERAFNK 204 ( 0xcc )
+EXBRSA 64248 ( 0xfaf8 )
+EXPTBL 64705 ( 0xfcc1 )
+EXTBIO 65482 ( 0xffca )
+EXTROM 351 ( 0x15f )
+FILVRM 86 ( 0x56 )
+FNKSB 201 ( 0xc9 )
+FNKSTR 63615 ( 0xf87f )
+GETCPU 387 ( 0x183 )
+GETYPR 40 ( 0x28 )
+GICINI 144 ( 0x90 )
+GRPPRT 141 ( 0x8d )
+GSPSIZ 138 ( 0x8a )
+GTPAD 219 ( 0xdb )
+GTPDL 222 ( 0xde )
+GTSTCK 213 ( 0xd5 )
+GTTRIG 216 ( 0xd8 )
+HIMEM 64586 ( 0xfc4a )
+HOKVLD 64288 ( 0xfb20 )
+H_PROMPT 62031 ( 0xf24f )
+H_TIMI 64927 ( 0xfd9f )
+INIFNK 62 ( 0x3e )
+INIGRP 114 ( 0x72 )
+INIMLT 117 ( 0x75 )
+INIT32 111 ( 0x6f )
+INITIO 59 ( 0x3b )
+INITXT 108 ( 0x6c )
+INLIN 177 ( 0xb1 )
+ISFLIO 330 ( 0x14a )
+KEYBUF 64496 ( 0xfbf0 )
+KEYINT 56 ( 0x38 )
+KILBUF 342 ( 0x156 )
+LDIRMV 89 ( 0x59 )
+LDIRVM 92 ( 0x5c )
+LINWRK 64536 ( 0xfc18 )
+LPTOUT 165 ( 0xa5 )
+LPTSTT 168 ( 0xa8 )
+MASTERS 62280 ( 0xf348 )
+MSG_CRLF 371 ( 0x173 )
+MSG_ENTRY 374 ( 0x176 )
+MSG_ERROR 444 ( 0x1bc )
+MSG_SUCCESS 433 ( 0x1b1 )
+NEWKEY 64485 ( 0xfbe5 )
+NMI 102 ( 0x66 )
+NRDVRM 372 ( 0x174 )
+NSETRD 366 ( 0x16e )
+NSTWRT 369 ( 0x171 )
+NWRVRM 375 ( 0x177 )
+OLDKEY 64474 ( 0xfbda )
+OLDSCR 64688 ( 0xfcb0 )
+OUTDLP 333 ( 0x14d )
+OUTDO 24 ( 0x18 )
+PATWRK 64576 ( 0xfc40 )
+PCMPLY 390 ( 0x186 )
+PCMREC 393 ( 0x189 )
+PINLIN 174 ( 0xae )
+POSIT 198 ( 0xc6 )
+PROCNM 64905 ( 0xfd89 )
+PUTS 357 ( 0x165 )
+QINLIN 180 ( 0xb4 )
+RAMAD0 62273 ( 0xf341 )
+RAMAD1 62274 ( 0xf342 )
+RAMAD2 62275 ( 0xf343 )
+RAMAD3 62276 ( 0xf344 )
+RDPRIM 62336 ( 0xf380 )
+RDPSG 150 ( 0x96 )
+RDRES 378 ( 0x17a )
+RDSLT 12 ( 0xc )
+RDVDP 318 ( 0x13e )
+RDVRM 74 ( 0x4a )
+RG0SAV 62431 ( 0xf3df )
+RG1SAV 62432 ( 0xf3e0 )
+RG2SAV 62433 ( 0xf3e1 )
+RG3SAV 62434 ( 0xf3e2 )
+RG4SAV 62435 ( 0xf3e3 )
+RG5SAV 62436 ( 0xf3e4 )
+RG6SAV 62437 ( 0xf3e5 )
+RG7SAV 62438 ( 0xf3e6 )
+RG8SAV 65511 ( 0xffe7 )
+RG9SAV 65512 ( 0xffe8 )
+RSLREG 312 ( 0x138 )
+SCC_MODE_REGISTER 49150 ( 0xbffe )
+SCRMOD 64687 ( 0xfcaf )
+SETGRP 126 ( 0x7e )
+SETMLT 129 ( 0x81 )
+SETRD 80 ( 0x50 )
+SETT32 123 ( 0x7b )
+SETTXT 120 ( 0x78 )
+SETWRT 83 ( 0x53 )
+SKIP1 303 ( 0x12f )
+SKIP2 331 ( 0x14b )
+SLTATR 64713 ( 0xfcc9 )
+SLTTBL 64709 ( 0xfcc5 )
+SLTWRK 64777 ( 0xfd09 )
+SNSMAT 321 ( 0x141 )
+STATFL 62439 ( 0xf3e7 )
+STMOTR 243 ( 0xf3 )
+STRTMS 153 ( 0x99 )
+SUBROM 348 ( 0x15c )
+SUB_BEEP 381 ( 0x17d )
+SUB_CALATR 253 ( 0xfd )
+SUB_CALPAT 249 ( 0xf9 )
+SUB_CHGCLR 273 ( 0x111 )
+SUB_CHGMDP 437 ( 0x1b5 )
+SUB_CHGMOD 209 ( 0xd1 )
+SUB_CLRSPR 245 ( 0xf5 )
+SUB_CLSSUB 277 ( 0x115 )
+SUB_DSPFNK 285 ( 0x11d )
+SUB_GETPAT 261 ( 0x105 )
+SUB_GETPLT 329 ( 0x149 )
+SUB_GSPSIZ 257 ( 0x101 )
+SUB_GTPPRT 137 ( 0x89 )
+SUB_INIGRP 221 ( 0xdd )
+SUB_INIMLT 225 ( 0xe1 )
+SUB_INIPLT 321 ( 0x141 )
+SUB_INIT32 217 ( 0xd9 )
+SUB_INITXT 213 ( 0xd5 )
+SUB_KNJPRT 445 ( 0x1bd )
+SUB_NEWPAD 429 ( 0x1ad )
+SUB_NVBXFL 205 ( 0xcd )
+SUB_NVBXLN 201 ( 0xc9 )
+SUB_PROMPT 385 ( 0x181 )
+SUB_RDVRM 269 ( 0x10d )
+SUB_REDCLK 501 ( 0x1f5 )
+SUB_RSTPLT 325 ( 0x145 )
+SUB_SETGRP 237 ( 0xed )
+SUB_SETMLT 241 ( 0xf1 )
+SUB_SETPAG 317 ( 0x13d )
+SUB_SETPLT 333 ( 0x14d )
+SUB_SETT32 233 ( 0xe9 )
+SUB_SETTXT 229 ( 0xe5 )
+SUB_VDPSTA 305 ( 0x131 )
+SUB_WRTCLK 505 ( 0x1f9 )
+SUB_WRTVDP 301 ( 0x12d )
+SUB_WRTVRM 265 ( 0x109 )
+SYNCHR 8 ( 0x8 )
+TAPIN 228 ( 0xe4 )
+TAPIOF 231 ( 0xe7 )
+TAPION 225 ( 0xe1 )
+TAPOOF 240 ( 0xf0 )
+TAPOON 234 ( 0xea )
+TAPOUT 237 ( 0xed )
+TOTEXT 210 ( 0xd2 )
+TPA_BOTTOM 6 ( 0x6 )
+TRPTBL 64588 ( 0xfc4c )
+WAIT_LOOP 311 ( 0x137 )
+WRPRIM 62341 ( 0xf385 )
+WRRES 381 ( 0x17d )
+WRSLT 20 ( 0x14 )
+WRTPSG 147 ( 0x93 )
+WRTVDP 71 ( 0x47 )
+WRTVRM 77 ( 0x4d )
+WSLREG 315 ( 0x13b )
