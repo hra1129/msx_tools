@@ -166,6 +166,8 @@ static int y_table[16] = {
 
 static uint8_t KeyLEDFlags = 0;
 
+static bool key_pressed = false;
+
 // --------------------------------------------------------------------
 static void gpio_init_sub_pull_up( uint gpio, bool dir_out ) {
 	gpio_init( gpio);
@@ -308,6 +310,7 @@ void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
 	uint8_t i;
 	const KEYMAP_T *p_keymap, *p_keymap_item;
 
+	key_pressed = false;
 	// select keymap
 	if( gpio_get( KEYMAP_SEL_PIN ) == 0 ) {
 		p_keymap = keymap_2nd;
@@ -323,6 +326,7 @@ void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
 			continue;
 		}
 		p_matrix[ p_keymap_item->y_code ] &= ~(1 << p_keymap_item->x_code);
+		key_pressed = true;
 	}
 	// modifier
 	for( i = 0; i < 8; i++ ) {
@@ -334,6 +338,7 @@ void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
 			continue;
 		}
 		p_matrix[ p_keymap_item->y_code ] &= ~(1 << p_keymap_item->x_code);
+		key_pressed = true;
 	}
 }
 
@@ -353,17 +358,8 @@ void hid_task( void ) {
 
 //--------------------------------------------------------------------+
 void led_blinking_task( void ) {
-    const uint32_t interval_ms = 250;
-    static uint32_t start_ms = 0;
 
-    static bool led_state = false;
-
-    // Blink every interval ms
-    if (board_millis() - start_ms < interval_ms) return; // not enough time
-    start_ms += interval_ms;
-
-    board_led_write(led_state);
-    led_state = 1 - led_state; // toggle
+	board_led_write( key_pressed );
 }
 
 // --------------------------------------------------------------------
@@ -432,8 +428,8 @@ int main( void ) {
 
 	for( ;; ) {
 		tuh_task();
-		led_blinking_task();
 		hid_task();
+		led_blinking_task();
 		led_and_pause_key_task();
 	}
 	return 0;
