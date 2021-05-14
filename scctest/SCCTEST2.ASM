@@ -1,5 +1,5 @@
 ; =============================================================================
-;	test of SoundCartridge
+;	test of SoundCartridge (for SD Snatcher)
 ; =============================================================================
 
 		include		"msxbios.asm"
@@ -31,13 +31,13 @@ entry::
 		call		enaslt
 
 		; Initialize bank registers
-		ld			a, 0
+		ld			a, 8
 		ld			[bank0_register], a
-		ld			a, 1
+		ld			a, 9
 		ld			[bank1_register], a
-		ld			a, 2
+		ld			a, 10
 		ld			[bank2_register], a
-		ld			a, 3
+		ld			a, 11
 		ld			[bank3_register], a
 
 		ld			a, 0x3F

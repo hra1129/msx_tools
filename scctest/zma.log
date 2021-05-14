@@ -19,10 +19,10 @@ Programmed by t.hara
 000100: ed 7b 06 00
 
 [	LD DE , MSG_ENTRY] Z80:11cyc, R800:3cyc
-000104: 11 76 01
+000104: 11 8a 01
 
 [	CALL PUTS] Z80:18cyc, R800:5cyc
-000107: cd 65 01
+000107: cd 79 01
 
 [	LD A , 0X01] Z80:8cyc, R800:2cyc
 00010a: 3e 01
@@ -42,156 +42,180 @@ Programmed by t.hara
 [	CALL ENASLT] Z80:18cyc, R800:5cyc
 000115: cd 24 00
 
+[	LD A , 8] Z80:8cyc, R800:2cyc
+000118: 3e 08
+
+[	LD [ BANK0_REGISTER ] , A] Z80:14cyc, R800:6cyc
+00011a: 32 00 50
+
+[	LD A , 9] Z80:8cyc, R800:2cyc
+00011d: 3e 09
+
+[	LD [ BANK1_REGISTER ] , A] Z80:14cyc, R800:6cyc
+00011f: 32 00 70
+
+[	LD A , 10] Z80:8cyc, R800:2cyc
+000122: 3e 0a
+
+[	LD [ BANK2_REGISTER ] , A] Z80:14cyc, R800:6cyc
+000124: 32 00 90
+
+[	LD A , 11] Z80:8cyc, R800:2cyc
+000127: 3e 0b
+
+[	LD [ BANK3_REGISTER ] , A] Z80:14cyc, R800:6cyc
+000129: 32 00 b0
+
 [	LD A , 0X3F] Z80:8cyc, R800:2cyc
-000118: 3e 3f
+00012c: 3e 3f
 
 [	LD [ SCC_MODE_REGISTER ] , A] Z80:14cyc, R800:6cyc
-00011a: 32 fe bf
+00012e: 32 fe bf
 
 [	LD HL , 0X4000] Z80:11cyc, R800:3cyc
-00011d: 21 00 40
+000131: 21 00 40
 
 [	LD A , [ HL ]] Z80:8cyc, R800:4cyc
-000120: 7e
+000134: 7e
 
 [	CPL] Z80:5cyc, R800:1cyc
-000121: 2f
+000135: 2f
 
 [	LD [ HL ] , A] Z80:8cyc, R800:4cyc
-000122: 77
+000136: 77
 
 [	PUSH AF] Z80:12cyc, R800:6cyc
-000123: f5
+000137: f5
 
 [	PUSH HL] Z80:12cyc, R800:6cyc
-000124: e5
+000138: e5
 
 [	CP A , [ HL ]] Z80:8cyc, R800:4cyc
-000125: be
+000139: be
 
 [	LD DE , MSG_SUCCESS] Z80:11cyc, R800:3cyc
-000126: 11 b1 01
+00013a: 11 c5 01
 
 [	JP Z , SKIP1] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
-000129: ca 2f 01
+00013d: ca 43 01
 
 [	LD DE , MSG_ERROR] Z80:11cyc, R800:3cyc
-00012c: 11 bc 01
+000140: 11 d0 01
 
 [SKIP1 :]
-	label address: 0x00012f
+	label address: 0x000143
 
 [	CALL PUTS] Z80:18cyc, R800:5cyc
-00012f: cd 65 01
+000143: cd 79 01
 
 [	XOR A , A] Z80:5cyc, R800:1cyc
-000132: af
+000146: af
 
 [	LD [ 0XFCA2 ] , A] Z80:14cyc, R800:6cyc
-000133: 32 a2 fc
+000147: 32 a2 fc
 
 [	EI] Z80:5cyc, R800:1cyc
-000136: fb
+00014a: fb
 
 [WAIT_LOOP :]
-	label address: 0x000137
-
-[	LD A , [ 0XFCA2 ]] Z80:14cyc, R800:6cyc
-000137: 3a a2 fc
-
-[	CP A , 90] Z80:8cyc, R800:2cyc
-00013a: fe 5a
-
-[	JP C , WAIT_LOOP] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
-00013c: da 37 01
-
-[	POP HL] Z80:11cyc, R800:5cyc
-00013f: e1
-
-[	POP AF] Z80:11cyc, R800:5cyc
-000140: f1
-
-[	CP A , [ HL ]] Z80:8cyc, R800:4cyc
-000141: be
-
-[	LD DE , MSG_SUCCESS] Z80:11cyc, R800:3cyc
-000142: 11 b1 01
-
-[	JP Z , SKIP2] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
-000145: ca 4b 01
-
-[	LD DE , MSG_ERROR] Z80:11cyc, R800:3cyc
-000148: 11 bc 01
-
-[SKIP2 :]
 	label address: 0x00014b
 
+[	LD A , [ 0XFCA2 ]] Z80:14cyc, R800:6cyc
+00014b: 3a a2 fc
+
+[	CP A , 90] Z80:8cyc, R800:2cyc
+00014e: fe 5a
+
+[	JP C , WAIT_LOOP] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000150: da 4b 01
+
+[	POP HL] Z80:11cyc, R800:5cyc
+000153: e1
+
+[	POP AF] Z80:11cyc, R800:5cyc
+000154: f1
+
+[	CP A , [ HL ]] Z80:8cyc, R800:4cyc
+000155: be
+
+[	LD DE , MSG_SUCCESS] Z80:11cyc, R800:3cyc
+000156: 11 c5 01
+
+[	JP Z , SKIP2] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+000159: ca 5f 01
+
+[	LD DE , MSG_ERROR] Z80:11cyc, R800:3cyc
+00015c: 11 d0 01
+
+[SKIP2 :]
+	label address: 0x00015f
+
 [	CALL PUTS] Z80:18cyc, R800:5cyc
-00014b: cd 65 01
+00015f: cd 79 01
 
 [	LD A , [ RAMAD1 ]] Z80:14cyc, R800:6cyc
-00014e: 3a 42 f3
+000162: 3a 42 f3
 
 [	LD H , 0X40] Z80:8cyc, R800:2cyc
-000151: 26 40
+000165: 26 40
 
 [	CALL ENASLT] Z80:18cyc, R800:5cyc
-000153: cd 24 00
+000167: cd 24 00
 
 [	LD A , [ RAMAD2 ]] Z80:14cyc, R800:6cyc
-000156: 3a 43 f3
+00016a: 3a 43 f3
 
 [	LD H , 0X80] Z80:8cyc, R800:2cyc
-000159: 26 80
+00016d: 26 80
 
 [	CALL ENASLT] Z80:18cyc, R800:5cyc
-00015b: cd 24 00
+00016f: cd 24 00
 
 [	LD B , 0] Z80:8cyc, R800:2cyc
-00015e: 06 00
+000172: 06 00
 
 [	LD C , D1F_TERM0] Z80:8cyc, R800:2cyc
-000160: 0e 00
+000174: 0e 00
 
 [	JP BDOS] Z80:11cyc, R800:5cyc
-000162: c3 05 00
+000176: c3 05 00
 
 [	INCLUDE ".//stdio.asm"] begin
 [	SCOPE PUTS]
 	Scope path: PUTS:
 
 [PUTS ::]
-	global label address: 0x000165
+	global label address: 0x000179
 
 [	LD A , [ DE ]] Z80:8cyc, R800:4cyc
-000165: 1a
+000179: 1a
 
 [	INC DE] Z80:7cyc, R800:1cyc
-000166: 13
+00017a: 13
 
 [	OR A , A] Z80:5cyc, R800:1cyc
-000167: b7
+00017b: b7
 
 [	RET Z] Z80:12cyc(branch), 6cyc(through), R800:5cyc(branch), 1cyc(through)
-000168: c8
+00017c: c8
 
 [	PUSH DE] Z80:12cyc, R800:6cyc
-000169: d5
+00017d: d5
 
 [	LD C , D1F_DIRIO] Z80:8cyc, R800:2cyc
-00016a: 0e 06
+00017e: 0e 06
 
 [	LD E , A] Z80:5cyc, R800:2cyc
-00016c: 5f
+000180: 5f
 
 [	CALL BDOS] Z80:18cyc, R800:5cyc
-00016d: cd 05 00
+000181: cd 05 00
 
 [	POP DE] Z80:11cyc, R800:5cyc
-000170: d1
+000184: d1
 
 [	JR PUTS] Z80:13cyc, R800:3cyc
-000171: 18 f2
+000185: 18 f2
 
 [	ENDSCOPE]
 	Scope path: 
@@ -199,49 +223,53 @@ Programmed by t.hara
 [	INCLUDE ".//stdio.asm"] end
 
 [MSG_CRLF ::]
-	global label address: 0x000173
+	global label address: 0x000187
 
 [	DB 0X0D , 0X0A , 0]
-000173: 0d 0a 00
+000187: 0d 0a 00
 
 [MSG_ENTRY ::]
-	global label address: 0x000176
+	global label address: 0x00018a
 
 [	DS "SoundCartridge TEST Programmed by HRA! 2021\r\n"]
-000176: 53 6f 75 6e 64 43 61 72
-00017e: 74 72 69 64 67 65 20 54
-000186: 45 53 54 20 50 72 6f 67
-00018e: 72 61 6d 6d 65 64 20 62
-000196: 79 20 48 52 41 21 20 32
-00019e: 30 32 31 0d 0a
+00018a: 53 6f 75 6e 64 43 61 72
+000192: 74 72 69 64 67 65 20 54
+00019a: 45 53 54 20 50 72 6f 67
+0001a2: 72 61 6d 6d 65 64 20 62
+0001aa: 79 20 48 52 41 21 20 32
+0001b2: 30 32 31 0d 0a
 
 [	DS "Slot#1 only\r\n"]
-0001a3: 53 6c 6f 74 23 31 20 6f
-0001ab: 6e 6c 79 0d 0a
-
-[	DB 0]
-0001b0: 00
-
-[MSG_SUCCESS ::]
-	global label address: 0x0001b1
-
-[	DS "Success.\r\n"]
-0001b1: 53 75 63 63 65 73 73 2e
-0001b9: 0d 0a
-
-[	DB 0]
-0001bb: 00
-
-[MSG_ERROR ::]
-	global label address: 0x0001bc
-
-[	DS "Error.\r\n"]
-0001bc: 45 72 72 6f 72 2e 0d 0a
+0001b7: 53 6c 6f 74 23 31 20 6f
+0001bf: 6e 6c 79 0d 0a
 
 [	DB 0]
 0001c4: 00
 
+[MSG_SUCCESS ::]
+	global label address: 0x0001c5
+
+[	DS "Success.\r\n"]
+0001c5: 53 75 63 63 65 73 73 2e
+0001cd: 0d 0a
+
+[	DB 0]
+0001cf: 00
+
+[MSG_ERROR ::]
+	global label address: 0x0001d0
+
+[	DS "Error.\r\n"]
+0001d0: 45 72 72 6f 72 2e 0d 0a
+
+[	DB 0]
+0001d8: 00
+
 << label >>
+BANK0_REGISTER 20480 ( 0x5000 )
+BANK1_REGISTER 28672 ( 0x7000 )
+BANK2_REGISTER 36864 ( 0x9000 )
+BANK3_REGISTER 45056 ( 0xb000 )
 BDOS 5 ( 0x5 )
 BEEP 192 ( 0xc0 )
 BIGFIL 363 ( 0x16b )
@@ -363,10 +391,10 @@ LINWRK 64536 ( 0xfc18 )
 LPTOUT 165 ( 0xa5 )
 LPTSTT 168 ( 0xa8 )
 MASTERS 62280 ( 0xf348 )
-MSG_CRLF 371 ( 0x173 )
-MSG_ENTRY 374 ( 0x176 )
-MSG_ERROR 444 ( 0x1bc )
-MSG_SUCCESS 433 ( 0x1b1 )
+MSG_CRLF 391 ( 0x187 )
+MSG_ENTRY 394 ( 0x18a )
+MSG_ERROR 464 ( 0x1d0 )
+MSG_SUCCESS 453 ( 0x1c5 )
 NEWKEY 64485 ( 0xfbe5 )
 NMI 102 ( 0x66 )
 NRDVRM 372 ( 0x174 )
@@ -383,7 +411,7 @@ PCMREC 393 ( 0x189 )
 PINLIN 174 ( 0xae )
 POSIT 198 ( 0xc6 )
 PROCNM 64905 ( 0xfd89 )
-PUTS 357 ( 0x165 )
+PUTS 377 ( 0x179 )
 QINLIN 180 ( 0xb4 )
 RAMAD0 62273 ( 0xf341 )
 RAMAD1 62274 ( 0xf342 )
@@ -414,8 +442,8 @@ SETRD 80 ( 0x50 )
 SETT32 123 ( 0x7b )
 SETTXT 120 ( 0x78 )
 SETWRT 83 ( 0x53 )
-SKIP1 303 ( 0x12f )
-SKIP2 331 ( 0x14b )
+SKIP1 323 ( 0x143 )
+SKIP2 351 ( 0x15f )
 SLTATR 64713 ( 0xfcc9 )
 SLTTBL 64709 ( 0xfcc5 )
 SLTWRK 64777 ( 0xfd09 )
@@ -470,7 +498,7 @@ TAPOUT 237 ( 0xed )
 TOTEXT 210 ( 0xd2 )
 TPA_BOTTOM 6 ( 0x6 )
 TRPTBL 64588 ( 0xfc4c )
-WAIT_LOOP 311 ( 0x137 )
+WAIT_LOOP 331 ( 0x14b )
 WRPRIM 62341 ( 0xf385 )
 WRRES 381 ( 0x17d )
 WRSLT 20 ( 0x14 )
