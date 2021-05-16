@@ -56,6 +56,8 @@ USB Keybard bridge for MSX
 	//
 	#define MSX_KEYMATRIX_INV 1
 
+	★PPI(i8255)の RegisterC (Y3-Y0) をそのまま接続する場合は、MSX_KEYMATRIX_INV は 0 にしてください。
+
 	//	MSX_KEYMATRIX_ROW_PULL_UP
 	//		0: Y0-Y11 の入力ピンに 内蔵 PULL UP/DOWN は使わない
 	//		1: Y0-Y11 の入力ピンに 内蔵 PULL UP を使う

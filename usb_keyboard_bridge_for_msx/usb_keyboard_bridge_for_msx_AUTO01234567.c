@@ -230,7 +230,11 @@ static void initialization( void ) {
 	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
 		gpio = MSX_KEYMATRIX_RESULT_PIN + i;
 		gpio_init( gpio );
-		gpio_set_dir( gpio, GPIO_OUT );
+		#if MSX_X_HIZ_SEL == 0
+			gpio_set_dir( gpio, GPIO_OUT );
+		#else
+			gpio_set_dir( gpio, GPIO_IN );
+		#endif
 		#if MSX_KEYMATRIX_X_PULL_UP == 1
 			gpio_set_pulls( gpio, true, false );		//	PULL UP
 		#elif MSX_KEYMATRIX_X_PULL_UP == 2

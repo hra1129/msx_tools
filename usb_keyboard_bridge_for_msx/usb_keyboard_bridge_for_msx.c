@@ -132,12 +132,36 @@
 #define PAUSE_KEY_SUPPORT 0
 
 // --------------------------------------------------------------------
+//	UART関連 
 #define UART_ID uart0
 #define BAUD_RATE 115200
 
 #define UART_TX_PIN 0
 #define UART_RX_PIN 1
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//	DEBUG_UART_ON
+//		0: UARTにログを出さない
+//		1: UARTにログを出す
+//	※UARTデバッグ時にのみ 1 にしてください。
+//	  これを 1 にすると処理が遅くなり、MSXにタイする応答が間に合いません。
+//
 #define DEBUG_UART_ON 0
+
+// --------------------------------------------------------------------
+//	X出力テストモード
+//		0: 通常モード
+//		1: キー入力の代わりに、自動的に 0, 1, 2, 3, 4, 5, 6, 7 を繰り返し
+//		   入力するモード
+//
+//	1 にして、0→1→2 ... と MSX に入力されれば、Y検出と X出力は正常に機能
+//	入力される文字が違う文字なら Y検出が正常に出来ていない可能性があります。
+//	入力される文字が 0,2,3,6,7 のように抜ける場合、Xの対応する信号が接続
+//	出来ていない可能性があります。
+//	何も入力されない場合、Xがすべて接続されていないか、Y0が接続されていない
+//	可能性があります。
+//
+#define AUTO_OUTPUT_MODE	0
 
 // --------------------------------------------------------------------
 CFG_TUSB_MEM_SECTION static hid_keyboard_report_t usb_keyboard_report;
@@ -206,7 +230,11 @@ static void initialization( void ) {
 	for( i = 0; i < 9; i++ ) {		// X0-X7 and PAUSE, 9bits
 		gpio = MSX_KEYMATRIX_RESULT_PIN + i;
 		gpio_init( gpio );
-		gpio_set_dir( gpio, GPIO_OUT );
+		#if MSX_X_HIZ_SEL == 0
+			gpio_set_dir( gpio, GPIO_OUT );
+		#else
+			gpio_set_dir( gpio, GPIO_IN );
+		#endif
 		#if MSX_KEYMATRIX_X_PULL_UP == 1
 			gpio_set_pulls( gpio, true, false );		//	PULL UP
 		#elif MSX_KEYMATRIX_X_PULL_UP == 2
@@ -306,54 +334,76 @@ void response_core( void ) {
 
 // --------------------------------------------------------------------
 //	Reflect hid_keyboard_report_t in key_matrix
-void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
-	uint8_t i;
-	const KEYMAP_T *p_keymap, *p_keymap_item;
+#if AUTO_OUTPUT_MODE == 0
+	void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
+		uint8_t i;
+		const KEYMAP_T *p_keymap, *p_keymap_item;
+	
+		key_pressed = false;
+		// select keymap
+		if( gpio_get( KEYMAP_SEL_PIN ) == 0 ) {
+			p_keymap = keymap_2nd;
+		}
+		else {
+			p_keymap = keymap_1st;
+		}
+	
+		// keycode
+		for( i = 0; i < 6; i++ ) {
+			p_keymap_item = &p_keymap[ p->keycode[i] ];
+			if( p_keymap_item->y_code == -1 ) {
+				continue;
+			}
+			p_matrix[ p_keymap_item->y_code ] &= ~(1 << p_keymap_item->x_code);
+			key_pressed = true;
+		}
+		// modifier
+		for( i = 0; i < 8; i++ ) {
+			if( (p->modifier & (1 << i)) == 0 ) {
+				continue;
+			}
+			p_keymap_item = &p_keymap[ 0x100 + i ];
+			if( p_keymap_item->y_code == -1 ) {
+				continue;
+			}
+			p_matrix[ p_keymap_item->y_code ] &= ~(1 << p_keymap_item->x_code);
+			key_pressed = true;
+		}
+	}
+#else
+	void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
+		static int current_key_bit = 0;
+		static uint32_t start_ms = 0;
+		static uint32_t interval_ms = 1000;
 
-	key_pressed = false;
-	// select keymap
-	if( gpio_get( KEYMAP_SEL_PIN ) == 0 ) {
-		p_keymap = keymap_2nd;
-	}
-	else {
-		p_keymap = keymap_1st;
-	}
+		p_matrix[0] = (uint8_t) ~(1 << current_key_bit);
 
-	// keycode
-	for( i = 0; i < 6; i++ ) {
-		p_keymap_item = &p_keymap[ p->keycode[i] ];
-		if( p_keymap_item->y_code == -1 ) {
-			continue;
+		if( board_millis() - start_ms < interval_ms ) {
+			return; // not enough time
 		}
-		p_matrix[ p_keymap_item->y_code ] &= ~(1 << p_keymap_item->x_code);
-		key_pressed = true;
+		start_ms += interval_ms;
+		current_key_bit = (current_key_bit + 1) & 7;
 	}
-	// modifier
-	for( i = 0; i < 8; i++ ) {
-		if( (p->modifier & (1 << i)) == 0 ) {
-			continue;
-		}
-		p_keymap_item = &p_keymap[ 0x100 + i ];
-		if( p_keymap_item->y_code == -1 ) {
-			continue;
-		}
-		p_matrix[ p_keymap_item->y_code ] &= ~(1 << p_keymap_item->x_code);
-		key_pressed = true;
-	}
-}
+#endif
 
 // --------------------------------------------------------------------
 void hid_task( void ) {
 	uint8_t const dev_addr = 1;
 	uint8_t current_key_matrix[ sizeof(msx_key_matrix) ];
 
-	if( !tuh_hid_keyboard_is_mounted( dev_addr ) ) return;
-
-	if( tuh_hid_keyboard_get_report( dev_addr, &usb_keyboard_report ) == TUSB_ERROR_NONE ) {
+	#if AUTO_OUTPUT_MODE == 0
+		if( !tuh_hid_keyboard_is_mounted( dev_addr ) ) return;
+	
+		if( tuh_hid_keyboard_get_report( dev_addr, &usb_keyboard_report ) == TUSB_ERROR_NONE ) {
+			memset( current_key_matrix, 0xFF, sizeof(current_key_matrix) );
+			update_key_matrix( current_key_matrix, &usb_keyboard_report );
+			memcpy( (void*) msx_key_matrix, current_key_matrix, sizeof(current_key_matrix) );
+		}
+	#else
 		memset( current_key_matrix, 0xFF, sizeof(current_key_matrix) );
 		update_key_matrix( current_key_matrix, &usb_keyboard_report );
 		memcpy( (void*) msx_key_matrix, current_key_matrix, sizeof(current_key_matrix) );
-	}
+	#endif
 }
 
 //--------------------------------------------------------------------+
