@@ -8,14 +8,30 @@
 
 // --------------------------------------------------------------------
 static int encode( int i ) {
-	int j;
+	int j, max_j, min_j, count;
 
+	max_j = -1;
+	min_j = 12;
+	count = 0;
 	for( j = 11; j >= 0; j-- ) {
 		if( (i & (1 << j)) != 0 ) {
-			return j;
+			min_j = j;
+			if( max_j == -1 ) {
+				max_j = j;
+			}
+			count++;
 		}
 	}
-	return 15;
+	if( count > 2 || count == 0 ) {
+		return 15;
+	}
+	if( max_j == 1 ) {
+		return 1;
+	}
+	if( min_j == 0 ) {
+		return 0;
+	}
+	return max_j;
 }
 
 // --------------------------------------------------------------------
