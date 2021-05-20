@@ -164,7 +164,8 @@
 #define AUTO_OUTPUT_MODE	0
 
 // --------------------------------------------------------------------
-CFG_TUSB_MEM_SECTION static hid_keyboard_report_t usb_keyboard_report;
+static bool connected_keyboard[ CFG_TUSB_HOST_DEVICE_MAX ] = { false };
+CFG_TUSB_MEM_SECTION static hid_keyboard_report_t usb_keyboard_report[ CFG_TUSB_HOST_DEVICE_MAX ];
 
 // --------------------------------------------------------------------
 typedef struct {
@@ -191,6 +192,7 @@ static int y_table[16] = {
 static uint8_t KeyLEDFlags = 0;
 
 static bool key_pressed = false;
+static uint8_t led_dev_addr = 0;
 
 // --------------------------------------------------------------------
 static void gpio_init_sub_pull_up( uint gpio, bool dir_out ) {
@@ -336,10 +338,10 @@ void response_core( void ) {
 //	Reflect hid_keyboard_report_t in key_matrix
 #if AUTO_OUTPUT_MODE == 0
 	void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
+		char s_buffer[256];
 		uint8_t i;
 		const KEYMAP_T *p_keymap, *p_keymap_item;
 	
-		key_pressed = false;
 		// select keymap
 		if( gpio_get( KEYMAP_SEL_PIN ) == 0 ) {
 			p_keymap = keymap_2nd;
@@ -390,15 +392,18 @@ void response_core( void ) {
 void hid_task( void ) {
 	uint8_t const dev_addr = 1;
 	uint8_t current_key_matrix[ sizeof(msx_key_matrix) ];
+	tusb_error_t rcode;
+	int i;
 
 	#if AUTO_OUTPUT_MODE == 0
 		if( !tuh_hid_keyboard_is_mounted( dev_addr ) ) return;
 	
-		if( tuh_hid_keyboard_get_report( dev_addr, &usb_keyboard_report ) == TUSB_ERROR_NONE ) {
-			memset( current_key_matrix, 0xFF, sizeof(current_key_matrix) );
-			update_key_matrix( current_key_matrix, &usb_keyboard_report );
-			memcpy( (void*) msx_key_matrix, current_key_matrix, sizeof(current_key_matrix) );
+		memset( current_key_matrix, 0xFF, sizeof(current_key_matrix) );
+		key_pressed = false;
+		for( i = 0; i < CFG_TUSB_HOST_DEVICE_MAX; i++ ) {
+			update_key_matrix( current_key_matrix, &(usb_keyboard_report[i]) );
 		}
+		memcpy( (void*) msx_key_matrix, current_key_matrix, sizeof(current_key_matrix) );
 	#else
 		memset( current_key_matrix, 0xFF, sizeof(current_key_matrix) );
 		update_key_matrix( current_key_matrix, &usb_keyboard_report );
@@ -414,8 +419,8 @@ void led_blinking_task( void ) {
 
 // --------------------------------------------------------------------
 void setKeyboardLeds( uint8_t Keyleds ) {
+
 	if ( Keyleds != KeyLEDFlags ){
-		uint8_t const addr = 1;
 		KeyLEDFlags = Keyleds;
 
 		tusb_control_request_t ledreq = {
@@ -428,7 +433,9 @@ void setKeyboardLeds( uint8_t Keyleds ) {
 			.wLength						= sizeof (KeyLEDFlags),
 		};
 
-		tuh_control_xfer( addr, &ledreq, &KeyLEDFlags, NULL );
+		if( led_dev_addr ) {
+			tuh_control_xfer( led_dev_addr, &ledreq, &KeyLEDFlags, NULL );
+		}
 	}
 }
 
@@ -487,19 +494,47 @@ int main( void ) {
 
 // --------------------------------------------------------------------
 //	Callback to be called when a keyboard is connected.
-void tuh_hid_keyboard_mounted_cb(uint8_t dev_addr) {
-	(void) dev_addr;
+void tuh_hid_keyboard_mounted_cb( uint8_t dev_addr ) {
+	//char s_buffer[256];
+
+	if( led_dev_addr == 0 ) {
+		led_dev_addr = dev_addr;
+		KeyLEDFlags = 0;
+	}
+	connected_keyboard[ dev_addr - 1 ] = true;
+	tuh_hid_keyboard_get_report( dev_addr, &(usb_keyboard_report[ dev_addr - 1 ]) );
+
+	//sprintf( s_buffer, "tuh_hid_keyboard_mounted_cb(%d)\r\n", (int)dev_addr );
+	//uart_puts( UART_ID, s_buffer );
 }
 
 // --------------------------------------------------------------------
 //	Callback to be called when the keyboard is disconnected.
 void tuh_hid_keyboard_unmounted_cb( uint8_t dev_addr ) {
-	(void) dev_addr;
+	//char s_buffer[256];
+	int i;
+
+	connected_keyboard[ dev_addr - 1 ] = false;
+	memset( &(usb_keyboard_report[ dev_addr - 1 ]), 0, sizeof( usb_keyboard_report[0] ) );
+
+	if( led_dev_addr == dev_addr ) {
+		led_dev_addr = 0;
+		for( i = 0; i < CFG_TUSB_HOST_DEVICE_MAX; i++ ) {
+			if( connected_keyboard[ i ] ) {
+				led_dev_addr = i + 1;
+			}
+		}
+		KeyLEDFlags = 0;
+	}
+	//sprintf( s_buffer, "tuh_hid_keyboard_unmounted_cb(%d)\r\n", (int)l_dev_addr );
+	//uart_puts( UART_ID, s_buffer );
 }
 
 // --------------------------------------------------------------------
 //	An interrupt that is called when a key on the keyboard is pressed or released.
 void tuh_hid_keyboard_isr( uint8_t dev_addr, xfer_result_t event ) {
-	(void) dev_addr;
-	(void) event;
+
+	tuh_hid_keyboard_get_report( dev_addr, &(usb_keyboard_report[ dev_addr - 1 ]) );
+	//sprintf( s_buffer, "tuh_hid_keyboard_isr(%d, %d)\r\n", (int)l_dev_addr, (int)event );
+	//uart_puts( UART_ID, s_buffer );
 }
