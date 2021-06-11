@@ -22,9 +22,9 @@
 //	THE SOFTWARE.
 // --------------------------------------------------------------------
 //
-//  2021�N05��05��: SONY HB-F500 Support ��ǉ�
-//      ����̂�����(@v9938 [twitter])�̃J�X�^���ɂ��AHB-F500 �ŗ��p�\�ɂȂ�܂���
-//      ���̃T�|�[�g�R�[�h��ǉ�
+//  2021年05月05日: SONY HB-F500 Support を追加
+//      きんのじさん(@v9938 [twitter])のカスタムにより、HB-F500 で利用可能になりました
+//      そのサポートコードを追加
 //
 //  May/5th/2021: Added the Sony HB-F500 Support.
 //
@@ -38,9 +38,9 @@
 
 // --------------------------------------------------------------------
 //	MSX_KEYMATRIX_ROW_TYPE
-//		0: Y3-Y0  �� ROW�A�h���X���w�肳���
-//		1: Y11-Y0 �� ROW�A�h���X���f�R�[�h�������ʂ��w�肳��� (ONE HOT)
-//		2: X8-X4 �� ROW�A�h���X���w�肳���AY0��DIR(HB-F500)
+//		0: Y3-Y0  に ROWアドレスが指定される
+//		1: Y11-Y0 に ROWアドレスをデコードした結果が指定される (ONE HOT)
+//		2: X8-X4 に ROWアドレスが指定される、Y0にDIR(HB-F500)
 //
 //		0: ROW address is specified for Y3-Y0.
 //		1: The result of decoding the ROW address is specified for Y11-Y0 (ONE HOT)
@@ -50,8 +50,8 @@
 
 // --------------------------------------------------------------------
 //	MSX_KEYMATRIX_INV
-//		0: Y11-Y0 �͐��_���ł���
-//		1: Y11-Y0 �͕��_���ł���
+//		0: Y11-Y0 は正論理である
+//		1: Y11-Y0 は負論理である
 //
 //		0: Y11-Y0 is positive logic.
 //		1: Y11-Y0 is negative logic.
@@ -61,9 +61,9 @@
 // --------------------------------------------------------------------
 //	MSX_KEYMATRIX_Y_PULL_UP
 //	MSX_KEYMATRIX_X_PULL_UP
-//		0: Y0-Y11, X0-X8 �̓��̓s���� ���� PULL UP/DOWN �͎g��Ȃ�
-//		1: Y0-Y11, X0-X8 �̓��̓s���� ���� PULL UP ���g��
-//		2: Y0-Y11, X0-X8 �̓��̓s���� ���� PULL DOWN ���g��
+//		0: Y0-Y11, X0-X8 の入力ピンに 内蔵 PULL UP/DOWN は使わない
+//		1: Y0-Y11, X0-X8 の入力ピンに 内蔵 PULL UP を使う
+//		2: Y0-Y11, X0-X8 の入力ピンに 内蔵 PULL DOWN を使う
 //
 //		0: Do not use the built-in PULL UP/DOWN on the Y0-Y11, X0-X8 input pins.
 //		1: Use built-in PULL UP for Y0-Y11, X0-X8 input pins
@@ -74,7 +74,7 @@
 
 // --------------------------------------------------------------------
 //	MSX_KEYMATRIX_ROW_PIN
-//		Y0 �� GPIO�ԍ��BY1-Y11 �́A��������C���N�������g���邩�����̘A��
+//		Y0 の GPIO番号。Y1-Y11 は、ここからインクリメントするかたちの連番
 //
 //		GPIO number of Y0. Y1-Y11 are sequential numbers that are incremented from here.
 //
@@ -82,8 +82,8 @@
 
 // --------------------------------------------------------------------
 //	MSX_X_HIZ_SEL
-//		0: X�o�͂� H or L �ł���
-//		1: X�o�͂� HiZ or L �ł���
+//		0: X出力は H or L である
+//		1: X出力は HiZ or L である
 //
 //		0: X output is H or L
 //		1: X output is HiZ or L
@@ -92,7 +92,7 @@
 
 // --------------------------------------------------------------------
 //	MSX_KEYMATRIX_RESULT_PIN
-//		X0 �� GPIO�ԍ��BX1-X7 �́A��������C���N�������g����`�̘A��
+//		X0 の GPIO番号。X1-X7 は、ここからインクリメントする形の連番
 //
 //		GPIO number of X0. X1-X7 are sequential numbers that are incremented from here.
 //
@@ -100,7 +100,7 @@
 
 // --------------------------------------------------------------------
 //  MSX_CAPS_LED_PIN
-//	    CAPS LED�M�����͂� GPIO�ԍ��B
+//	    CAPS LED信号入力の GPIO番号。
 //
 //		GPIO number of the CAPS LED signal input.
 //
@@ -108,7 +108,7 @@
 
 // --------------------------------------------------------------------
 //  MSX_KANA_LED_PIN
-//		���� LED�M�����͂� GPIO�ԍ��B
+//		かな LED信号入力の GPIO番号。
 //
 //		GPIO number of the KANA LED signal input.
 //
@@ -116,7 +116,7 @@
 
 // --------------------------------------------------------------------
 //  KEYMAP_SEL_PIN
-//	    KEYMAP_1ST �� KEYMAP_2ND �ؑփX�C�b�`�� GPIO�ԍ��B
+//	    KEYMAP_1ST と KEYMAP_2ND 切替スイッチの GPIO番号。
 //			open : keymap_1st
 //			GND  : keymap_2nd
 //
@@ -132,40 +132,39 @@
 #define PAUSE_KEY_SUPPORT 0
 
 // --------------------------------------------------------------------
-//	UART�֘A 
-#define UART_ID uart0
-#define BAUD_RATE 115200
-
-#define UART_TX_PIN 0
-#define UART_RX_PIN 1
-
+//	UART関連 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 //	DEBUG_UART_ON
-//		0: UART�Ƀ��O���o���Ȃ�
-//		1: UART�Ƀ��O���o��
-//	��UART�f�o�b�O���ɂ̂� 1 �ɂ��Ă��������B
-//	  ����� 1 �ɂ���Ə������x���Ȃ�AMSX�Ƀ^�C���鉞�����Ԃɍ����܂���B
+//		0: UARTにログを出さない
+//		1: UARTにログを出す
+//	※UARTデバッグ時にのみ 1 にしてください。
+//	  これを 1 にすると処理が遅くなり、MSXにタイする応答が間に合いません。
 //
 #define DEBUG_UART_ON 0
 
 // --------------------------------------------------------------------
-//	X�o�̓e�X�g���[�h
-//		0: �ʏ탂�[�h
-//		1: �L�[���͂̑���ɁA�����I�� 0, 1, 2, 3, 4, 5, 6, 7 ���J��Ԃ�
-//		   ���͂��郂�[�h
-//
-//	1 �ɂ��āA0��1��2 ... �� MSX �ɓ��͂����΁AY���o�� X�o�͂͐���ɋ@�\
-//	���͂���镶�����Ⴄ�����Ȃ� Y���o������ɏo���Ă��Ȃ��\��������܂��B
-//	���͂���镶���� 0,2,3,6,7 �̂悤�ɔ�����ꍇ�AX�̑Ή�����M�����ڑ�
-//	�o���Ă��Ȃ��\��������܂��B
-//	�������͂���Ȃ��ꍇ�AX�����ׂĐڑ�����Ă��Ȃ����AY0���ڑ�����Ă��Ȃ�
-//	�\��������܂��B
+//	X出力テストモード
+//		0: 通常モード
+//		1: キー入力の代わりに、自動的に 0, 1, 2, 3, 4, 5, 6, 7 を繰り返し
+//		   入力するモード 
+//	
+//	1 にして、0→1→2 ... と MSX に入力されれば、Y検出と X出力は正常に機能 
+//	入力される文字が違う文字なら Y検出が正常に出来ていない可能性があります。
+//	入力される文字が 0,2,3,6,7 のように抜ける場合、Xの対応する信号が接続
+//	出来ていない可能性があります。
+//	何も入力されない場合、Xがすべて接続されていないか、Y0が接続されていない
+//	可能性があります。
 //
 #define AUTO_OUTPUT_MODE	0
 
 // --------------------------------------------------------------------
+#define MAX_REPORT  4
+
+static uint8_t report_count[ CFG_TUH_HID ];
+static tuh_hid_report_info_t report_info_arr[ CFG_TUH_HID ][ MAX_REPORT ];
+
 static bool connected_keyboard[ CFG_TUSB_HOST_DEVICE_MAX ] = { false };
-CFG_TUSB_MEM_SECTION static hid_keyboard_report_t usb_keyboard_report[ CFG_TUSB_HOST_DEVICE_MAX ];
+static hid_keyboard_report_t usb_keyboard_report[ CFG_TUH_HID ] = { 0 };
 
 // --------------------------------------------------------------------
 typedef struct {
@@ -184,10 +183,12 @@ static uint8_t msx_key_matrix[16] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 };
 
-static int y_table[16] = {
-	0x0, 0x8, 0x4, 0xC, 0x2, 0xA, 0x6, 0xE, 
-	0x1, 0x9, 0x5, 0xD, 0x3, 0xB, 0x7, 0xF, 
-};
+#if MSX_KEYMATRIX_ROW_TYPE == 2
+	static int y_table[16] = {
+		0x0, 0x8, 0x4, 0xC, 0x2, 0xA, 0x6, 0xE, 
+		0x1, 0x9, 0x5, 0xD, 0x3, 0xB, 0x7, 0xF, 
+	};
+#endif
 
 static uint8_t KeyLEDFlags = 0;
 
@@ -207,13 +208,6 @@ static void initialization( void ) {
 	int gpio;
 
 	board_init();
-
-	uart_init(UART_ID, BAUD_RATE);
-	gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
-	gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
-	uart_set_hw_flow(UART_ID, false, false);
-	uart_set_format(UART_ID, 8, 2, UART_PARITY_NONE);
-
 	tusb_init();
 
 	//	Set the GPIO signal direction.
@@ -315,7 +309,7 @@ void response_core( void ) {
 		#endif
 
 		#if DEBUG_UART_ON
-			uart_puts( UART_ID, "\x1B" "7Y :76543210\r\n" );
+			printf( "\x1B" "7Y :76543210\r\n" );
 			for( i = 0; i < 16; i++ ) {
 				sprintf( s_buffer, "%2d:", i );
 				matrix = msx_key_matrix[i];
@@ -326,9 +320,9 @@ void response_core( void ) {
 				s_buffer[ 8 + 3 ] = '\r';
 				s_buffer[ 9 + 3 ] = '\n';
 				s_buffer[10 + 3 ] = '\0';
-				uart_puts( UART_ID, s_buffer );
+				printf( s_buffer );
 			}
-			uart_puts( UART_ID, "\x1B" "8" );
+			printf( "\x1B" "8" );
 			sleep_ms( 1000 );
 		#endif
 	}
@@ -338,7 +332,6 @@ void response_core( void ) {
 //	Reflect hid_keyboard_report_t in key_matrix
 #if AUTO_OUTPUT_MODE == 0
 	void update_key_matrix( uint8_t *p_matrix, const hid_keyboard_report_t *p ) {
-		char s_buffer[256];
 		uint8_t i;
 		const KEYMAP_T *p_keymap, *p_keymap_item;
 	
@@ -390,17 +383,13 @@ void response_core( void ) {
 
 // --------------------------------------------------------------------
 void hid_task( void ) {
-	uint8_t const dev_addr = 1;
 	uint8_t current_key_matrix[ sizeof(msx_key_matrix) ];
-	tusb_error_t rcode;
-	int i;
 
 	#if AUTO_OUTPUT_MODE == 0
-		if( !tuh_hid_keyboard_is_mounted( dev_addr ) ) return;
-	
+		int i;
 		memset( current_key_matrix, 0xFF, sizeof(current_key_matrix) );
 		key_pressed = false;
-		for( i = 0; i < CFG_TUSB_HOST_DEVICE_MAX; i++ ) {
+		for( i = 0; i < CFG_TUH_HID; i++ ) {
 			update_key_matrix( current_key_matrix, &(usb_keyboard_report[i]) );
 		}
 		memcpy( (void*) msx_key_matrix, current_key_matrix, sizeof(current_key_matrix) );
@@ -462,8 +451,8 @@ void led_and_pause_key_task( void ) {
 		Keyleds &= KEYBOARD_LED_CAPSLOCK ^ 0xFF;
 	}
 	
-	//	�K�i���KANA LED�͑��݂��邪�ASCROLLLOCK�ő�p����
-	//	(����LED �𓋍ڂ��Ă���L�[�{�[�h�����܂葶�݂��Ȃ�����)
+	//	規格上はKANA LEDは存在するが、SCROLLLOCKで代用する
+	//	(かなLED を搭載しているキーボードがあまり存在しないため)
 	//
 	//	KANA LED exists in the standard, but SCROLLLOCK is used instead.
 	//	(Since there are not many keyboards with kana LEDs, it is not possible to use them.)
@@ -494,28 +483,31 @@ int main( void ) {
 
 // --------------------------------------------------------------------
 //	Callback to be called when a keyboard is connected.
-void tuh_hid_keyboard_mounted_cb( uint8_t dev_addr ) {
-	//char s_buffer[256];
+void tuh_hid_mount_cb( uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len ) {
+
+	#if DEBUG_UART_ON
+		printf( "tuh_hid_mount_cb( %d, %d, %p, %d );\n", dev_addr, instance, desc_report, desc_len );
+	#endif
 
 	if( led_dev_addr == 0 ) {
 		led_dev_addr = dev_addr;
 		KeyLEDFlags = 0;
 	}
 	connected_keyboard[ dev_addr - 1 ] = true;
-	tuh_hid_keyboard_get_report( dev_addr, &(usb_keyboard_report[ dev_addr - 1 ]) );
-
-	//sprintf( s_buffer, "tuh_hid_keyboard_mounted_cb(%d)\r\n", (int)dev_addr );
-	//uart_puts( UART_ID, s_buffer );
+	report_count[instance] = tuh_hid_parse_report_descriptor( report_info_arr[instance], MAX_REPORT, desc_report, desc_len );
 }
 
 // --------------------------------------------------------------------
 //	Callback to be called when the keyboard is disconnected.
-void tuh_hid_keyboard_unmounted_cb( uint8_t dev_addr ) {
-	//char s_buffer[256];
+void tuh_hid_umount_cb( uint8_t dev_addr, uint8_t instance ) {
 	int i;
 
+	#if DEBUG_UART_ON
+		printf( "tuh_hid_umount_cb( %d, %d );\n", dev_addr, instance );
+	#endif
+
 	connected_keyboard[ dev_addr - 1 ] = false;
-	memset( &(usb_keyboard_report[ dev_addr - 1 ]), 0, sizeof( usb_keyboard_report[0] ) );
+	memset( &usb_keyboard_report[ instance ], 0, sizeof(hid_keyboard_report_t) );
 
 	if( led_dev_addr == dev_addr ) {
 		led_dev_addr = 0;
@@ -526,15 +518,54 @@ void tuh_hid_keyboard_unmounted_cb( uint8_t dev_addr ) {
 		}
 		KeyLEDFlags = 0;
 	}
-	//sprintf( s_buffer, "tuh_hid_keyboard_unmounted_cb(%d)\r\n", (int)l_dev_addr );
-	//uart_puts( UART_ID, s_buffer );
 }
 
 // --------------------------------------------------------------------
-//	An interrupt that is called when a key on the keyboard is pressed or released.
-void tuh_hid_keyboard_isr( uint8_t dev_addr, xfer_result_t event ) {
+void tuh_hid_report_received_cb( uint8_t dev_addr, uint8_t instance, uint8_t const* report, uint16_t len ) {
 
-	tuh_hid_keyboard_get_report( dev_addr, &(usb_keyboard_report[ dev_addr - 1 ]) );
-	//sprintf( s_buffer, "tuh_hid_keyboard_isr(%d, %d)\r\n", (int)l_dev_addr, (int)event );
-	//uart_puts( UART_ID, s_buffer );
+	(void) dev_addr;
+
+	uint8_t const rpt_count = report_count[ instance ];
+	tuh_hid_report_info_t* rpt_info_arr = report_info_arr[ instance ];
+	tuh_hid_report_info_t* rpt_info = NULL;
+
+	#if DEBUG_UART_ON
+		printf( "tuh_hid_report_received_cb( %d, %d, %p, %d )\n", dev_addr, instance, report, len );
+	#endif
+
+	if ( rpt_count == 1 && rpt_info_arr[0].report_id == 0) {
+		// Simple report without report ID as 1st byte
+		rpt_info = &rpt_info_arr[0];
+	} else {
+		// Composite report, 1st byte is report ID, data starts from 2nd byte
+		uint8_t const rpt_id = report[0];
+
+		// Find report id in the arrray
+		for( uint8_t i = 0; i < rpt_count; i++ ) {
+			if( rpt_id == rpt_info_arr[i].report_id ) {
+				rpt_info = &rpt_info_arr[i];
+				break;
+			}
+		}
+
+		report++;
+		len--;
+	}
+
+	if( !rpt_info ) {
+		#if DEBUG_UART_ON
+			printf( "-- rpt_info == NULL\n" );
+		#endif
+		return;
+	}
+
+	#if DEBUG_UART_ON
+		printf( "-- rpt_info->usage_page == %d\n", rpt_info->usage_page );
+		printf( "-- rpt_info->usage == %d\n", rpt_info->usage );
+	#endif
+	if( rpt_info->usage_page == HID_USAGE_PAGE_DESKTOP ) {
+		if( rpt_info->usage == HID_USAGE_DESKTOP_KEYBOARD ) {
+			memcpy( &usb_keyboard_report[ instance ], report, sizeof(hid_keyboard_report_t) );
+		}
+	}
 }
