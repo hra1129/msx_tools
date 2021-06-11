@@ -43,11 +43,6 @@ USB Gamepad bridge for MSX
 	ここにある一式（usb_gamepad_bridge_for_msx.c 等）を、そのディレクトリへコピー
 	します。
 
-	pico-sdk/lib の中に、ここに置いてある TinyUSB/pico-sdk/lib の中身を上書きコピーします。
-	これにより、TinyUSB に gamepadサポートが追加されます。
-	（その他のライブラリがバージョンアップして互換性が失われてしまった場合に、
-	正常に機能しなくなるかもしれません。）
-
 	ディレクトリ build に入り、make または nmake で rebuild_cache します。
 	> nmake rebuild_cache
 
@@ -72,3 +67,16 @@ USB Gamepad bridge for MSX
 	一方で MSX は 5V です。
 	MSX → Pico の接続は、10kΩ程度の抵抗器を挟んで接続して下さい。
 	Pico → MSX の接続は、直結でOKです。
+
+------------------------------------------------------------------------------
+2021年5月8日 ver1.0 HRA!
+	TinyUSB が GAMEPAD/JOYSTICK にまだ対応していないため、TinyUSB自体を修正して
+	強引に対応。手持ちのゲームパッド (JOYSTICKとして認識) のみ動作確認。
+
+2021年6月11日 ver1.1 HRA!
+	TinyUSB が GAMEPAD対応したことを機に、独自修正を排除。
+	TinyUSB の API が大幅に変更になっていたため、それに合わせて修正。
+	相変わらず JOYSTICK の方の対応はまだなので、my_hid_joystick_report_t を定義
+	して対応。ver1.0 と同様に動作することを確認。
+	GAMEPADとして認識するコントローラーにも対応しているつもりだが、そのような
+	ゲームパッドを所有していないため、動作未確認。

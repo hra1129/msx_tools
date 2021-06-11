@@ -42,11 +42,6 @@ you will need to recompile it.
   Create a directory usb_gamepad_bridge_for_msx in the same location and copy the complete 
 set (usb_gamepad_bridge_for_msx.c, etc.) to that directory.
 
-  Copy the contents of TinyUSB/pico-sdk/lib into pico-sdk/lib, overwriting the contents of 
-TinyUSB/pico-sdk/lib, which is located here.
-  This will add gamepad support to TinyUSB.
-  (It may not work properly if other libraries are upgraded and lose compatibility.)
-
   Enter the directory build and rebuild_cache with make or nmake.
 
     > nmake rebuild_cache
