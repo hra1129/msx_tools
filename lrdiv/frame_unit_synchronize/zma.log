@@ -1,0 +1,332 @@
+Z80 Macro Assembler ZMA v1.0.15
+=====================================================
+Programmed by t.hara
+
+<< code >>
+[	DB 0XFE]
+000000: fe
+
+[	DW START_ADR , END_ADR , START_ADR]
+000001: 00 b0 8c b0 00 b0
+
+[	ORG 0XB000]
+	code address: 0x00b000
+
+[START_ADR :]
+	label address: 0x00b000
+
+[	SCOPE CHANGE_TO_Z80]
+	Scope path: CHANGE_TO_Z80:
+
+[	LD A , [ MSXVER ]] Z80:14cyc, R800:6cyc
+00b000: 3a 2d 00
+
+[	CP A , 3] Z80:8cyc, R800:2cyc
+00b003: fe 03
+
+[	JP C , NOT_TURBO_R] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+00b005: da 13 b0
+
+[	CALL GETCPU] Z80:18cyc, R800:5cyc
+00b008: cd 83 01
+
+[	LD [ BACKUP_CPU ] , A] Z80:14cyc, R800:6cyc
+00b00b: 32 89 b0
+
+[	LD A , 0X80] Z80:8cyc, R800:2cyc
+00b00e: 3e 80
+
+[	CALL CHGCPU] Z80:18cyc, R800:5cyc
+00b010: cd 80 01
+
+[NOT_TURBO_R :]
+	label address: 0x00b013
+
+[	ENDSCOPE]
+	Scope path: 
+
+[	SCOPE MAIN_LOOP]
+	Scope path: MAIN_LOOP:
+
+[	DI] Z80:5cyc, R800:2cyc
+00b013: f3
+
+[MAIN_LOOP :]
+	label address: 0x00b014
+
+[	LD C , VDP_PORT + 1] Z80:8cyc, R800:2cyc
+00b014: 0e 99
+
+[	LD A , 2] Z80:8cyc, R800:2cyc
+00b016: 3e 02
+
+[	OUT [ C ] , A] Z80:14cyc, R800:10 or 9cyc
+00b018: ed 79
+
+[	LD A , 0X8F] Z80:8cyc, R800:2cyc
+00b01a: 3e 8f
+
+[	OUT [ C ] , A] Z80:14cyc, R800:10 or 9cyc
+00b01c: ed 79
+
+[WAIT_V_SYNC_LOOP :]
+	label address: 0x00b01e
+
+[	IN A , [ VDP_PORT + 1 ]] Z80:12cyc, R800:10 or 9cyc
+00b01e: db 99
+
+[	AND A , 0X40] Z80:8cyc, R800:2cyc
+00b020: e6 40
+
+[	JR Z , WAIT_V_SYNC_LOOP] Z80:13cyc(cond=true), 8cyc(cond=false), R800:3cyc(cond=true), 2cyc(cond=false)
+00b022: 28 fa
+
+[	LD A , [ R23_LEFT ]] Z80:14cyc, R800:6cyc
+00b024: 3a 8a b0
+
+[	INC A] Z80:5cyc, R800:1cyc
+00b027: 3c
+
+[	LD [ R23_LEFT ] , A] Z80:14cyc, R800:6cyc
+00b028: 32 8a b0
+
+[	LD D , A] Z80:5cyc, R800:2cyc
+00b02b: 57
+
+[	LD A , [ R23_RIGHT ]] Z80:14cyc, R800:6cyc
+00b02c: 3a 8b b0
+
+[	DEC A] Z80:5cyc, R800:1cyc
+00b02f: 3d
+
+[	LD [ R23_RIGHT ] , A] Z80:14cyc, R800:6cyc
+00b030: 32 8b b0
+
+[	LD E , A] Z80:5cyc, R800:2cyc
+00b033: 5f
+
+[	LD B , 212] Z80:8cyc, R800:2cyc
+00b034: 06 d4
+
+[	LD L , 0X80 + 23] Z80:8cyc, R800:2cyc
+00b036: 2e 97
+
+[	LD H , 0X60] Z80:8cyc, R800:2cyc
+00b038: 26 60
+
+[WAIT_NOT_HV_SYNC_LOOP :]
+	label address: 0x00b03a
+
+[	IN A , [ VDP_PORT + 1 ]] Z80:12cyc, R800:10 or 9cyc
+00b03a: db 99
+
+[	AND A , H] Z80:5cyc, R800:1cyc
+00b03c: a4
+
+[	JR NZ , WAIT_NOT_HV_SYNC_LOOP] Z80:13cyc(cond=true), 8cyc(cond=false), R800:3cyc(cond=true), 2cyc(cond=false)
+00b03d: 20 fb
+
+[	LD H , 0X20] Z80:8cyc, R800:2cyc
+00b03f: 26 20
+
+[WAIT_H_SYNC_LOOP :]
+	label address: 0x00b041
+
+[	IN A , [ VDP_PORT + 1 ]] Z80:12cyc, R800:10 or 9cyc
+00b041: db 99
+
+[	AND A , H] Z80:5cyc, R800:1cyc
+00b043: a4
+
+[	JR Z , WAIT_H_SYNC_LOOP] Z80:13cyc(cond=true), 8cyc(cond=false), R800:3cyc(cond=true), 2cyc(cond=false)
+00b044: 28 fb
+
+[LINE_PROCESS :]
+	label address: 0x00b046
+
+[	OUT [ C ] , D] Z80:14cyc, R800:10 or 9cyc
+00b046: ed 51
+
+[	OUT [ C ] , L] Z80:14cyc, R800:10 or 9cyc
+00b048: ed 69
+
+[	ADD A , 0] Z80:8cyc, R800:2cyc
+00b04a: c6 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b04c: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b04d: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b04e: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b04f: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b050: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b051: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b052: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b053: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b054: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b055: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b056: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b057: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b058: 00
+
+[	JP SKIP1] Z80:11cyc, R800:5cyc
+00b059: c3 5c b0
+
+[SKIP1 :]
+	label address: 0x00b05c
+
+[	OUT [ C ] , E] Z80:14cyc, R800:10 or 9cyc
+00b05c: ed 59
+
+[	OUT [ C ] , L] Z80:14cyc, R800:10 or 9cyc
+00b05e: ed 69
+
+[	ADD A , 0] Z80:8cyc, R800:2cyc
+00b060: c6 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b062: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b063: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b064: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b065: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b066: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b067: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b068: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b069: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b06a: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b06b: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b06c: 00
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b06d: 00
+
+[	DEC B] Z80:5cyc, R800:1cyc
+00b06e: 05
+
+[	JP NZ , LINE_PROCESS] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+00b06f: c2 46 b0
+
+[	NOP] Z80:5cyc, R800:1cyc
+00b072: 00
+
+[	ADD A , 0] Z80:8cyc, R800:2cyc
+00b073: c6 00
+
+[	JP WAIT_V_SYNC_LOOP] Z80:11cyc, R800:5cyc
+00b075: c3 1e b0
+
+[	ENDSCOPE]
+	Scope path: 
+
+[	SCOPE RESTORE_CPU]
+	Scope path: RESTORE_CPU:
+
+[	LD A , [ MSXVER ]] Z80:14cyc, R800:6cyc
+00b078: 3a 2d 00
+
+[	CP A , 3] Z80:8cyc, R800:2cyc
+00b07b: fe 03
+
+[	JP C , NOT_TURBO_R] Z80:11cyc, R800:5cyc(cond=true), 3cyc(cond=false)
+00b07d: da 88 b0
+
+[	LD A , [ BACKUP_CPU ]] Z80:14cyc, R800:6cyc
+00b080: 3a 89 b0
+
+[	OR A , 0X80] Z80:8cyc, R800:2cyc
+00b083: f6 80
+
+[	CALL CHGCPU] Z80:18cyc, R800:5cyc
+00b085: cd 80 01
+
+[NOT_TURBO_R :]
+	label address: 0x00b088
+
+[	ENDSCOPE]
+	Scope path: 
+
+[	RET] Z80:11cyc, R800:5cyc
+00b088: c9
+
+[BACKUP_CPU :]
+	label address: 0x00b089
+
+[	DB 0]
+00b089: 00
+
+[R23_LEFT :]
+	label address: 0x00b08a
+
+[	DB 0]
+00b08a: 00
+
+[R23_RIGHT :]
+	label address: 0x00b08b
+
+[	DB 0]
+00b08b: 00
+
+[END_ADR :]
+	label address: 0x00b08c
+
+<< label >>
+BACKUP_CPU 45193 ( 0xb089 )
+CHANGE_TO_Z80:NOT_TURBO_R 45075 ( 0xb013 )
+CHGCPU 384 ( 0x180 )
+END_ADR 45196 ( 0xb08c )
+GETCPU 387 ( 0x183 )
+MAIN_LOOP:LINE_PROCESS 45126 ( 0xb046 )
+MAIN_LOOP:MAIN_LOOP 45076 ( 0xb014 )
+MAIN_LOOP:SKIP1 45148 ( 0xb05c )
+MAIN_LOOP:WAIT_H_SYNC_LOOP 45121 ( 0xb041 )
+MAIN_LOOP:WAIT_NOT_HV_SYNC_LOOP 45114 ( 0xb03a )
+MAIN_LOOP:WAIT_V_SYNC_LOOP 45086 ( 0xb01e )
+MSXVER 45 ( 0x2d )
+R23_LEFT 45194 ( 0xb08a )
+R23_RIGHT 45195 ( 0xb08b )
+RESTORE_CPU:NOT_TURBO_R 45192 ( 0xb088 )
+START_ADR 45056 ( 0xb000 )
+VDP_PORT 152 ( 0x98 )
