@@ -75,14 +75,14 @@
 // --------------------------------------------------------------------
 //	BUTTON MAP
 //
-#define A_BUTTON			GAMEPAD_BUTTON_2
-#define B_BUTTON			GAMEPAD_BUTTON_0
-#define C_BUTTON			GAMEPAD_BUTTON_1
-#define X_BUTTON			GAMEPAD_BUTTON_5
-#define Y_BUTTON			GAMEPAD_BUTTON_3
-#define Z_BUTTON			GAMEPAD_BUTTON_4
-#define START_BUTTON		GAMEPAD_BUTTON_7
-#define MODE_BUTTON			GAMEPAD_BUTTON_6
+#define A_BUTTON			GAMEPAD_BUTTON_C
+#define B_BUTTON			GAMEPAD_BUTTON_A
+#define C_BUTTON			GAMEPAD_BUTTON_B
+#define X_BUTTON			GAMEPAD_BUTTON_Z
+#define Y_BUTTON			GAMEPAD_BUTTON_X
+#define Z_BUTTON			GAMEPAD_BUTTON_Y
+#define START_BUTTON		GAMEPAD_BUTTON_TR
+#define MODE_BUTTON			GAMEPAD_BUTTON_TL
 
 // --------------------------------------------------------------------
 #define DEBUG_UART_ON 0
@@ -115,6 +115,33 @@ static uint8_t volatile joymega_matrix[5] = {
 
 static uint8_t report_count[ CFG_TUH_HID ];
 static tuh_hid_report_info_t report_info_arr[ CFG_TUH_HID ][ MAX_REPORT ];
+static int process_mode = 0;	//	0: joypad_mode, 1: mouse_mode
+
+// --------------------------------------------------------------------
+//	Mouse information
+
+//	USBマウスから送られてくる情報を収集するための変数
+static volatile int16_t	mouse_delta_x = 0;
+static volatile int16_t	mouse_delta_y = 0;
+static volatile int		mouse_resolution = 0;
+static int32_t	mouse_button = 0;
+
+//	USBマウスから送られてきた情報を元に「送信用」に加工した値を格納する変数
+static volatile int32_t	mouse_current_data = 3;
+static volatile bool mouse_consume_data = false;
+
+//	現在MSXへ送信している内容を保持する変数
+static int32_t	mouse_sending_data = 0;
+
+//	LED Pattern
+static int led_state = 0;
+static const int led_pattern[5][8] = {
+	{ 1, 0, 0, 0, 0, 0, 0, 0 },			//	Joypad mode
+	{ 1, 0, 1, 0, 0, 0, 0, 0 },			//	Mouse mode (normal)
+	{ 1, 0, 1, 0, 1, 0, 0, 0 },			//	Mouse mode (V half)
+	{ 1, 0, 1, 0, 0, 0, 1, 0 },			//	Mouse mode (normal2)
+	{ 1, 1, 0, 1, 0, 1, 0, 0 },			//	Mouse mode (V half2)
+};
 
 // --------------------------------------------------------------------
 static void initialization( void ) {
@@ -139,88 +166,199 @@ static uint64_t inline my_get_us( void ) {
 }
 
 // --------------------------------------------------------------------
-void response_core( void ) {
+static void joypad_mode( void ) {
 	static const uint32_t mask = 0x3F << MSX_BUTTON_PIN;
 	static const uint64_t sequence_trigger_us = 1100;		//	1100[usec]
 	static const uint64_t sequence_finish_us = 1600;		//	1600[usec]
 	static uint64_t start_time;
 
+	//	state 0
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[1] << MSX_BUTTON_PIN );
+	}
+	start_time = my_get_us();
+
+	//	state 1
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[0] << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > sequence_trigger_us ) {
+			break;
+		}
+	}
+	if( (my_get_us() - start_time) > sequence_trigger_us ) {
+		return;
+	}
+
+	//	state 2
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[1] << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > sequence_trigger_us ) {
+			break;
+		}
+	}
+	if( (my_get_us() - start_time) > sequence_trigger_us ) {
+		return;
+	}
+	//	state 3
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[0] << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > sequence_trigger_us ) {
+			break;
+		}
+	}
+	if( (my_get_us() - start_time) > sequence_trigger_us ) {
+		return;
+	}
+	//	state 4
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[1] << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > sequence_trigger_us ) {
+			break;
+		}
+	}
+	if( (my_get_us() - start_time) > sequence_trigger_us ) {
+		return;
+	}
+	//	state 5
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[2] << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > sequence_finish_us ) {
+			break;
+		}
+	}
+	if( (my_get_us() - start_time) > sequence_finish_us ) {
+		return;
+	}
+	//	state 6
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[3] << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > sequence_finish_us ) {
+			break;
+		}
+	}
+	if( (my_get_us() - start_time) > sequence_finish_us ) {
+		return;
+	}
+	//	state 7
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
+		gpio_put_masked( mask, (uint32_t)joymega_matrix[4] << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > sequence_finish_us ) {
+			break;
+		}
+	}
+}
+
+// --------------------------------------------------------------------
+static uint32_t inline get_mouse_button_bits( void ) {
+	return (mouse_sending_data & 3);
+}
+
+// --------------------------------------------------------------------
+static uint32_t inline get_mouse_nibble_bits_1st( void ) {
+
+	//	MSXへ送っている最中に更新されないようにコピーする
+	mouse_sending_data = mouse_current_data;
+
+	//	1個目のデータは無意味 (ボタンのみ)
+	return get_mouse_button_bits();
+}
+
+// --------------------------------------------------------------------
+static uint32_t inline get_mouse_nibble_bits_2nd( void ) {
+
+	return get_mouse_button_bits() | ((mouse_sending_data >> 2) & 0x3C);
+}
+
+// --------------------------------------------------------------------
+static uint32_t inline get_mouse_nibble_bits_3rd( void ) {
+
+	return get_mouse_button_bits() | ((mouse_sending_data >> 6) & 0x3C);
+}
+
+// --------------------------------------------------------------------
+static uint32_t inline get_mouse_nibble_bits_4th( void ) {
+
+	return get_mouse_button_bits() | ((mouse_sending_data >> 10) & 0x3C);
+}
+
+// --------------------------------------------------------------------
+static uint32_t inline get_mouse_nibble_bits_5th( void ) {
+
+	return get_mouse_button_bits() | ((mouse_sending_data >> 14) & 0x3C);
+}
+
+// --------------------------------------------------------------------
+static uint32_t inline get_mouse_nibble_bits_6th( void ) {
+
+	return get_mouse_button_bits();
+}
+
+// --------------------------------------------------------------------
+static void mouse_mode( void ) {
+	static const uint32_t mask = 0x3F << MSX_BUTTON_PIN;
+	static const uint64_t timeout_us = 500;		//	500[usec]
+	static uint64_t start_time;
+
+	//	idle
+	gpio_put_masked( mask, get_mouse_nibble_bits_1st() << MSX_BUTTON_PIN );
+	if( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
+		return;
+	}
+
+	mouse_consume_data = true;
+	mouse_current_data &= 0xF;
+	start_time = my_get_us();
+
+	//	state 1
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
+		gpio_put_masked( mask, get_mouse_nibble_bits_2nd() << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > timeout_us ) {
+			return;
+		}
+	}
+
+	//	state 2
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
+		gpio_put_masked( mask, get_mouse_nibble_bits_3rd() << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > timeout_us ) {
+			return;
+		}
+	}
+
+	//	state 3
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
+		gpio_put_masked( mask, get_mouse_nibble_bits_4th() << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > timeout_us ) {
+			return;
+		}
+	}
+
+	//	state 4
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
+		gpio_put_masked( mask, get_mouse_nibble_bits_5th() << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > timeout_us ) {
+			return;
+		}
+	}
+
+	//	state 5
+	while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
+		gpio_put_masked( mask, get_mouse_nibble_bits_6th() << MSX_BUTTON_PIN );
+		if( (my_get_us() - start_time) > timeout_us ) {
+			return;
+		}
+	}
+}
+
+// --------------------------------------------------------------------
+void response_core( void ) {
+
 	for( ;; ) {
-		for( ;; ) {
-			//	state 0
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[1] << MSX_BUTTON_PIN );
-			}
-			start_time = my_get_us();
-
-			//	state 1
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[0] << MSX_BUTTON_PIN );
-				if( (my_get_us() - start_time) > sequence_trigger_us ) {
-					break;
-				}
-			}
-			if( (my_get_us() - start_time) > sequence_trigger_us ) {
-				break;
-			}
-
-			//	state 2
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[1] << MSX_BUTTON_PIN );
-				if( (my_get_us() - start_time) > sequence_trigger_us ) {
-					break;
-				}
-			}
-			if( (my_get_us() - start_time) > sequence_trigger_us ) {
-				break;
-			}
-			//	state 3
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[0] << MSX_BUTTON_PIN );
-				if( (my_get_us() - start_time) > sequence_trigger_us ) {
-					break;
-				}
-			}
-			if( (my_get_us() - start_time) > sequence_trigger_us ) {
-				break;
-			}
-			//	state 4
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[1] << MSX_BUTTON_PIN );
-				if( (my_get_us() - start_time) > sequence_trigger_us ) {
-					break;
-				}
-			}
-			if( (my_get_us() - start_time) > sequence_trigger_us ) {
-				break;
-			}
-			//	state 5
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[2] << MSX_BUTTON_PIN );
-				if( (my_get_us() - start_time) > sequence_finish_us ) {
-					break;
-				}
-			}
-			if( (my_get_us() - start_time) > sequence_finish_us ) {
-				break;
-			}
-			//	state 6
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_L ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[3] << MSX_BUTTON_PIN );
-				if( (my_get_us() - start_time) > sequence_finish_us ) {
-					break;
-				}
-			}
-			if( (my_get_us() - start_time) > sequence_finish_us ) {
-				break;
-			}
-			//	state 7
-			while( gpio_get( MSX_SEL_PIN ) == MSX_SEL_H ) {
-				gpio_put_masked( mask, (uint32_t)joymega_matrix[4] << MSX_BUTTON_PIN );
-				if( (my_get_us() - start_time) > sequence_finish_us ) {
-					break;
-				}
-			}
+		if( process_mode == 0 ) {
+			joypad_mode();
+		}
+		else {
+			mouse_mode();
 		}
 	}
 }
@@ -230,14 +368,16 @@ void led_blinking_task(void) {
 	const uint32_t interval_ms = 250;
 	static uint32_t start_ms = 0;
 
-	static bool led_state = false;
-
 	// Blink every interval ms
 	if (board_millis() - start_ms < interval_ms) return; // not enough time
 	start_ms += interval_ms;
-
-	board_led_write(led_state);
-	led_state = 1 - led_state; // toggle
+	if( process_mode == 0 ) {
+		board_led_write( led_pattern[ 0 ][ led_state ] );
+	}
+	else {
+		board_led_write( led_pattern[ mouse_resolution + 1 ][ led_state ] );
+	}
+	led_state = (led_state + 1) & 7;
 }
 
 // --------------------------------------------------------------------
@@ -389,6 +529,81 @@ static void process_joystick_report( my_hid_joystick_report_t const *p_report ) 
 }
 
 // --------------------------------------------------------------------
+static void process_mouse_report( hid_mouse_report_t const * report ) {
+	int16_t delta_x;
+	int16_t delta_y;
+	int32_t send_data, last_mouse_button;
+	int d1, d2, d3, d4;
+	static const int reverse_inv4[] = { 3, 1, 2, 0 };
+	static const int reverse16[] = { 0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15 };
+	
+	if( mouse_consume_data ) {
+		mouse_consume_data = false;
+		mouse_delta_x = 0;
+		mouse_delta_y = 0;
+	}
+	delta_x = mouse_delta_x - (int16_t) report->x;
+	if( delta_x < -127 ) {
+		delta_x = -127;
+	}
+	else if( delta_x > 127 ) {
+		delta_x = 127;
+	}
+
+	delta_y = mouse_delta_y - (int16_t) report->y;
+	if( delta_y < -127 ) {
+		delta_y = -127;
+	}
+	else if( delta_y > 127 ) {
+		delta_y = 127;
+	}
+
+	last_mouse_button = mouse_button;
+	mouse_button = (report->buttons & (MOUSE_BUTTON_RIGHT | MOUSE_BUTTON_LEFT | MOUSE_BUTTON_MIDDLE));
+
+	//	中ボタンが押されたら解像度を変える
+	if( !(last_mouse_button & MOUSE_BUTTON_MIDDLE) && (mouse_button & MOUSE_BUTTON_MIDDLE) ) {
+		mouse_resolution = (mouse_resolution + 1) & 3;
+	}
+
+	//	送信用データを作る
+	send_data = reverse_inv4[ mouse_button & 3 ];
+	switch( mouse_resolution ) {
+	default:
+	case 0:
+		d1 = reverse16[((delta_x     ) >> 4) & 0x0F ];
+		d2 = reverse16[ (delta_x     )       & 0x0F ];
+		d3 = reverse16[((delta_y     ) >> 4) & 0x0F ];
+		d4 = reverse16[ (delta_y     )       & 0x0F ];
+		break;
+	case 1:
+		d1 = reverse16[((delta_x     ) >> 4) & 0x0F ];
+		d2 = reverse16[ (delta_x     )       & 0x0F ];
+		d3 = reverse16[((delta_y >> 1) >> 4) & 0x0F ];
+		d4 = reverse16[ (delta_y >> 1)       & 0x0F ];
+		break;
+	case 2:
+		d1 = reverse16[((delta_x >> 1) >> 4) & 0x0F ];
+		d2 = reverse16[ (delta_x >> 1)       & 0x0F ];
+		d3 = reverse16[((delta_y >> 1) >> 4) & 0x0F ];
+		d4 = reverse16[ (delta_y >> 1)       & 0x0F ];
+		break;
+	case 3:
+		d1 = reverse16[((delta_x >> 1) >> 4) & 0x0F ];
+		d2 = reverse16[ (delta_x >> 1)       & 0x0F ];
+		d3 = reverse16[((delta_y >> 2) >> 4) & 0x0F ];
+		d4 = reverse16[ (delta_y >> 2)       & 0x0F ];
+		break;
+	}
+	send_data = send_data | (d1 << 4) | (d2 << 8) | (d3 << 12) | (d4 << 16);
+
+	//	排他制御は面倒なので省略 (^^;
+	mouse_delta_x = delta_x;
+	mouse_delta_y = delta_y;
+	mouse_current_data = send_data;
+}
+
+// --------------------------------------------------------------------
 int main(void) {
 
 	initialization();
@@ -408,11 +623,24 @@ int main(void) {
 //
 void tuh_hid_mount_cb( uint8_t dev_addr, uint8_t instance, uint8_t const* desc_report, uint16_t desc_len ) {
 
-	(void) dev_addr;
+	//	Check device type
+	uint8_t const interface_protocol = tuh_hid_interface_protocol( dev_addr, instance );
+
 	#if DEBUG_UART_ON
 		printf( "tuh_hid_mount_cb( %d, %d, %p, %d );\n", dev_addr, instance, desc_report, desc_len );
 	#endif
 	report_count[instance] = tuh_hid_parse_report_descriptor( report_info_arr[instance], MAX_REPORT, desc_report, desc_len );
+
+	if( interface_protocol == HID_ITF_PROTOCOL_MOUSE ) {
+		process_mode = 1;	//	mouse_mode
+		mouse_delta_x = 0;
+		mouse_delta_y = 0;
+		mouse_button = 0;
+		mouse_resolution = 0;
+	}
+	else {
+		process_mode = 0;	//	joypad_mode
+	}
 }
 
 // --------------------------------------------------------------------
@@ -427,6 +655,8 @@ void tuh_hid_umount_cb( uint8_t dev_addr, uint8_t instance ) {
 	#if DEBUG_UART_ON
 		printf( "tuh_hid_umount_cb( %d, %d );\n", dev_addr, instance );
 	#endif
+
+	process_mode = 0;	//	joypad_mode
 }
 
 // --------------------------------------------------------------------
@@ -478,6 +708,9 @@ void tuh_hid_report_received_cb( uint8_t dev_addr, uint8_t instance, uint8_t con
 		}
 		else if( rpt_info->usage == HID_USAGE_DESKTOP_JOYSTICK ) {
 			process_joystick_report( (my_hid_joystick_report_t const*) report );
+		}
+		else if( rpt_info->usage == HID_USAGE_DESKTOP_MOUSE ) {
+			process_mouse_report( (hid_mouse_report_t const*) report );
 		}
 	}
 }

@@ -2,7 +2,7 @@ USB Gamepad bridge for MSX
 -------------------------------------------------------------------------------
 
 1. What's this?
-  This is a "program that runs on a Raspberry Pi Pico to allow a USB gamepad 
+  This is a "program that runs on a Raspberry Pi Pico to allow a USB gamepad/Mouse
 to be connected to the MSX joystick port using the Raspberry Pi Pico.
 
   As a bonus, I've included support for SEGA MegaDrive/Genesis, but since I 
