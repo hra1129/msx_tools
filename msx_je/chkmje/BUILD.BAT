@@ -1,0 +1,2 @@
+zma CHKMJE.ASM CHKMJE.COM
+pause
