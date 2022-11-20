@@ -1,0 +1,2 @@
+zma DETSCC.ASM DETSCC.COM
+pause
